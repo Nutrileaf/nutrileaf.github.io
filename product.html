@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nutrileaf Product</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.product-detail-page{min-height:100vh;background:#faf8f2;color:var(--green)}
+.product-detail-wrap{max-width:1120px;margin:0 auto;padding:70px 24px}
+.product-back{display:inline-block;margin-bottom:32px;color:var(--green);text-decoration:none;font:15px Georgia,serif}
+.product-detail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:70px;align-items:center;background:#fff;border:1px solid var(--line);padding:36px}
+.product-detail-image{min-height:520px;background:linear-gradient(135deg,#edf0e8,#d7e1d1);display:grid;place-items:center}
+.product-detail-image img{width:100%;height:100%;max-height:520px;object-fit:contain;padding:20px;box-sizing:border-box}
+.product-detail-symbol{font:110px Georgia;color:var(--green)}
+.product-detail-tag{display:block;color:#b86d38;letter-spacing:2px;text-transform:uppercase;font-size:12px;margin-bottom:12px}
+.product-detail h1{font:46px Georgia,serif;line-height:1.05;margin:0 0 20px}
+.product-detail-description{font-size:17px;line-height:1.7;color:#56655c;margin-bottom:28px}
+.product-detail-price{font-size:25px;font-weight:700;margin-bottom:24px}
+.quantity-control{display:flex;align-items:center;width:max-content;border:1px solid #b8c5b5;border-radius:999px;overflow:hidden;margin-bottom:18px}
+.quantity-control button{width:44px;height:44px;border:0;background:#f5f2e9;color:var(--green);font-size:20px;cursor:pointer}
+.quantity-control span{min-width:44px;text-align:center;font-size:16px}
+.detail-add{width:100%;max-width:300px;padding:14px 20px;border:0;border-radius:4px;background:var(--green);color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+.detail-note{margin-top:18px;font-size:13px;color:#718077}
+.product-quantity-label{display:block;margin:0 0 8px;color:var(--green);font-size:13px;font-weight:700;letter-spacing:.04em}
+.quantity-control input{width:58px;height:44px;border:0;background:#fff;color:var(--green);text-align:center;font-size:16px;font-weight:600;outline:none}
+.quantity-control input::-webkit-outer-spin-button,.quantity-control input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}
+.quantity-control input[type=number]{-moz-appearance:textfield}
+.product-toast{position:fixed;right:24px;bottom:24px;z-index:1000;width:min(360px,calc(100vw - 32px));padding:16px 18px;background:#fff;border:1px solid #c2cec3;border-radius:14px;box-shadow:0 14px 35px rgba(36,49,40,.16);display:flex;align-items:center;justify-content:space-between;gap:16px;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+.product-toast.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.product-toast-message{color:var(--green);font-size:14px;line-height:1.35}
+.product-toast-link{color:var(--green);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}
+.product-toast-link:hover{text-decoration:underline}
+@media(max-width:600px){.product-toast{right:16px;bottom:16px}}
+@media(max-width:800px){.product-detail{grid-template-columns:1fr;gap:35px;padding:22px}.product-detail-image{min-height:360px}.product-detail h1{font-size:36px}.product-detail-wrap{padding:40px 18px}}
+</style>
+</head>
+<body>
+<main class="product-detail-page">
+<div class="product-detail-wrap">
+<a class="product-back" href="index.html#collection">← Back to collection</a>
+<section class="product-detail" id="productDetail" aria-live="polite"></section>
+</div>
+</main>
+<script src="script.js"></script>
+<script>
+const id=new URLSearchParams(location.search).get("id");
+const product=products.find(p=>p.id===Number(id));
+const detail=document.querySelector("#productDetail");
+if(!product){
+  detail.innerHTML="<div><h1>Product not found</h1><p>The product you're looking for is not available.</p></div>";
+}else{
+  let qty=1;
+  const image=product.image?`<img src="${product.image}" alt="${product.name} label">`:`<div class="product-detail-symbol">${product.symbol}</div>`;
+  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${product.type}</span><h1>${product.name}</h1><p class="product-detail-description">${product.desc}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${product.ingredients}`:""}</p><div class="product-detail-price">${money(product.price)}</div><label class="product-quantity-label" for="qtyValue">Quantity</label><div class="quantity-control" aria-label="Quantity"><button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button><input id="qtyValue" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Product quantity"><button type="button" id="qtyPlus" aria-label="Increase quantity">+</button></div><button type="button" class="detail-add" id="detailAdd">Add to cart</button><div class="detail-note">Choose a quantity using − / + or type the number directly.</div></div>`;
+  const qtyValue=document.querySelector("#qtyValue");
+  const normalizeQty=()=>{
+    const value=Math.max(1,parseInt(qtyValue.value,10)||1);
+    qty=value;
+    qtyValue.value=String(qty);
+    return qty;
+  };
+  document.querySelector("#qtyMinus").onclick=()=>{qty=Math.max(1,normalizeQty()-1);qtyValue.value=String(qty)};
+  document.querySelector("#qtyPlus").onclick=()=>{qty=normalizeQty()+1;qtyValue.value=String(qty)};
+  qtyValue.addEventListener("input",normalizeQty);
+  qtyValue.addEventListener("blur",normalizeQty);
+  const productToast=document.createElement("div");
+  productToast.className="product-toast";
+  productToast.setAttribute("role","status");
+  productToast.setAttribute("aria-live","polite");
+  productToast.innerHTML=`<span class="product-toast-message" id="productToastMessage"></span><a class="product-toast-link" href="index.html?openCart=1#cartDrawer">View Cart</a>`;
+  document.body.appendChild(productToast);
+  let productToastTimer;
+  document.querySelector("#detailAdd").onclick=()=>{
+    const amount=normalizeQty();
+    addToCart(product.id,amount);
+    document.querySelector("#productToastMessage").textContent=`✓ ${amount} × ${product.name} added to cart`;
+    productToast.classList.add("show");
+    clearTimeout(productToastTimer);
+    productToastTimer=setTimeout(()=>productToast.classList.remove("show"),3000);
+  };
+}
+</script>
+</body>
+</html>

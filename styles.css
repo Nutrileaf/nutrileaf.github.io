@@ -1,0 +1,1320 @@
+:root{--ink:#243128;--green:#3f5b48;--sage:#dfe8dc;--cream:#f8f5ed;--paper:#fffdf8;--accent:#b17a4c;--line:#ddd8cb}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:Inter,Arial,sans-serif;background:var(--paper)}a{text-decoration:none;color:inherit}.site-header{height:78px;display:flex;align-items:center;justify-content:space-between;padding:0 6vw;border-bottom:1px solid var(--line);background:rgba(255,253,248,.95);position:sticky;top:0;z-index:5}.brand{display:flex;gap:10px;align-items:center;font-weight:800;letter-spacing:.14em}.brand small{display:block;font-size:8px;letter-spacing:.18em;margin-top:4px;font-weight:500}.leaf{font-size:24px;color:var(--accent)}nav{display:flex;align-items:center;gap:26px;font-size:14px}.cart-btn{border:0;background:var(--green);color:white;border-radius:999px;padding:10px 16px}.cart-btn span{background:white;color:var(--green);border-radius:20px;padding:1px 6px;margin-left:4px}.menu{display:none}.hero{min-height:600px;background:linear-gradient(110deg,#edf1e9 0%,#f8f5ed 55%,#e9dfd0 100%);display:grid;grid-template-columns:1.15fr .85fr;align-items:center;padding:70px 10vw}.eyebrow{font-size:11px;letter-spacing:.22em;font-weight:700;color:var(--accent)}h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,86px);line-height:.96;margin:18px 0}h1 em,h2 em{color:var(--green);font-weight:400}.hero-copy{max-width:480px;font-size:18px;line-height:1.7;color:#59635b;margin-bottom:30px}.button{display:inline-block;border:0;background:var(--green);color:#fff;padding:14px 22px;border-radius:3px;font-weight:700;cursor:pointer}.hero-art{justify-self:center;width:310px;height:310px;border-radius:50%;background:#d3dfcf;display:grid;place-items:center;position:relative;box-shadow:inset 0 0 0 20px rgba(255,255,255,.35)}.circle{font:150px Georgia;color:var(--green)}.hero-art span{position:absolute;bottom:48px;text-align:center;letter-spacing:.22em;font-size:10px;font-weight:700}.categories{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line)}.categories a{text-align:center;padding:18px 10px;border-right:1px solid var(--line);font-family:Georgia,serif;font-size:17px;white-space:nowrap}.categories a:hover{background:var(--sage)}.shop{padding:90px 7vw}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:35px}.section-head h2,.story h2,.newsletter h2,.contact h2{font:400 44px Georgia;margin:8px 0}.section-head select{padding:12px 16px;border:1px solid var(--line);background:white}.products{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}.product{border:1px solid var(--line);background:white}.product-photo{height:270px;background:linear-gradient(135deg,#edf0e8,#d7e1d1);display:grid;place-items:center;font:64px Georgia;color:var(--green)}.product-info{padding:18px}.tag{font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--accent)}.product h3{font:22px Georgia;margin:8px 0}.product p{font-size:13px;line-height:1.5;color:#667068;min-height:40px}.product-row{display:flex;justify-content:space-between;align-items:center}.price{font-weight:800}.add{border:1px solid var(--green);background:white;color:var(--green);padding:9px 12px;cursor:pointer}.add:hover{background:var(--green);color:white}.story{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  gap:70px;
+  align-items:center;
+  min-height:560px;
+  overflow:hidden;
+  isolation:isolate;
+  background-color:#f8f5ed;
+  background-image:none;
+}
+.story::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(248,245,237,.97) 0%,
+      rgba(248,245,237,.88) 28%,
+      rgba(248,245,237,.62) 46%,
+      rgba(248,245,237,.25) 62%,
+      rgba(248,245,237,0) 78%
+    ),
+    url("nutrileaf-story-herbal.png");
+  background-size:cover, cover;
+  background-position:center, center;
+  background-repeat:no-repeat, no-repeat;
+  pointer-events:none;
+}
+.story > div{
+  grid-column:1;
+  width:100%;
+  max-width:680px;
+  justify-self:start;
+  position:relative;
+  z-index:1;
+}
+@media(max-width:800px){
+  .story{
+    grid-template-columns:1fr;
+    min-height:auto;
+  }
+  .story > div{
+    grid-column:1;
+    max-width:none;
+  }
+}
+
+.product-photo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  padding:12px;
+  box-sizing:border-box;
+}
+
+.product{cursor:pointer}
+.product:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+
+/* SECTION 2 — approved herbal background only */
+.hero{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  background-image:none !important;
+  background-color:#f8f5ed !important;
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(248,245,237,.97) 0%,
+      rgba(248,245,237,.88) 28%,
+      rgba(248,245,237,.62) 46%,
+      rgba(248,245,237,.25) 62%,
+      rgba(248,245,237,0) 78%
+    ),
+    url("nutrileaf-herbal-hero.png");
+  background-size:cover, cover;
+  background-position:center, center;
+  background-repeat:no-repeat, no-repeat;
+  pointer-events:none;
+}
+.hero-content{
+  position:relative;
+  z-index:2;
+}
+
+/* SECTION 5 — approved herbal background and hero-style text readability */
+.story .story-image{
+  display:none!important;
+}
+.story p{
+  color:#365846;
+}
+
+/* Restore the approved header logo sizing */
+.brand-logo{display:block;width:220px;height:auto;max-height:70px;object-fit:contain}
+@media(max-width:800px){.brand-logo{width:180px;max-height:58px}}
+@media(max-width:500px){.brand-logo{width:155px;max-height:50px}}
+
+/* SECTION 5 — align story text with the Hero's left spacing */
+.story{
+  padding:70px 10vw;
+  box-sizing:border-box;
+}
+
+
+/* CART — matched to the approved Nutrileaf visual language */
+.cart-drawer{
+  position:fixed;
+  inset:0;
+  background:rgba(36,49,40,.28);
+  display:none;
+  z-index:50;
+}
+.cart-drawer.open{display:block}
+.cart-panel{
+  position:absolute;
+  top:0;
+  right:0;
+  width:min(430px,94vw);
+  height:100%;
+  overflow:auto;
+  background:var(--paper);
+  padding:28px 30px;
+  box-shadow:-18px 0 45px rgba(36,49,40,.14);
+}
+.cart-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-bottom:18px;
+  border-bottom:1px solid var(--line);
+}
+.cart-head h2{
+  margin:0;
+  font:400 34px Georgia,serif;
+  color:var(--green);
+}
+.cart-head button{
+  border:0;
+  background:transparent;
+  color:var(--green);
+  font-size:32px;
+  line-height:1;
+  cursor:pointer;
+  padding:2px 6px;
+}
+#cartItems{padding:8px 0}
+.cart-item{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 0;
+  border-bottom:1px solid var(--line);
+  font-size:14px;
+}
+.cart-item strong{
+  display:block;
+  font-family:Georgia,serif;
+  font-size:18px;
+  font-weight:400;
+  color:var(--green);
+  margin-bottom:5px;
+}
+.remove{
+  border:0;
+  background:none;
+  color:var(--accent);
+  cursor:pointer;
+  white-space:nowrap;
+}
+.cart-total{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:22px 0;
+  font-size:17px;
+}
+.cart-total strong{font-size:20px;color:var(--green)}
+.button.full{width:100%;text-align:center}
+.tiny{
+  margin:13px 0 0;
+  color:#777f79;
+  font-size:11px;
+  line-height:1.55;
+  text-align:center;
+}
+
+/* CONTACT — same restrained botanical presentation */
+.contact{
+  padding:88px 10vw;
+  background:#edf1e9;
+  border-top:1px solid var(--line);
+}
+.contact h2{
+  max-width:650px;
+  color:var(--green);
+}
+.contact p:not(.eyebrow){
+  max-width:620px;
+  margin:0;
+  color:#59635b;
+  font-size:16px;
+  line-height:1.75;
+}
+
+/* FOOTER — warm, minimal, matching the approved site */
+footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:26px 10vw;
+  background:var(--green);
+  color:#f7f4eb;
+  border-top:1px solid rgba(255,255,255,.12);
+  font-size:12px;
+  letter-spacing:.04em;
+}
+footer .inline-brand{
+  font-family:Georgia,serif;
+  font-size:17px;
+  margin-right:4px;
+}
+@media(max-width:800px){
+  .cart-panel{padding:24px 22px}
+  .contact{padding:70px 7vw}
+  footer{
+    padding:24px 7vw;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
+}
+
+/* CONTACT + STAY CONNECTED — match the supplied reference text treatment */
+.newsletter{
+  padding:88px 7vw;
+  background:var(--paper);
+  border-top:0;
+}
+.newsletter .eyebrow,
+.contact .eyebrow{
+  margin:0 0 12px;
+}
+.newsletter h2,
+.contact h2{
+  font:400 44px Georgia,serif;
+  color:var(--ink);
+  margin:8px 0 18px;
+}
+.newsletter > p:not(.eyebrow),
+.contact > p:not(.eyebrow){
+  max-width:620px;
+  color:#59635b;
+  font-size:16px;
+  line-height:1.7;
+}
+.newsletter form{
+  display:flex;
+  max-width:560px;
+  margin-top:24px;
+}
+.newsletter input{
+  flex:1;
+  min-width:0;
+  border:1px solid var(--line);
+  background:#fff;
+  padding:14px 16px;
+  border-radius:3px 0 0 3px;
+}
+.newsletter form .button{
+  border-radius:0 3px 3px 0;
+}
+.contact{
+  padding:88px 7vw;
+  background:var(--paper);
+  border-top:1px solid var(--line);
+}
+.contact h2{
+  max-width:650px;
+}
+.contact > p:not(.eyebrow){
+  margin:0;
+}
+@media(max-width:800px){
+  .newsletter,.contact{padding:70px 7vw}
+  .newsletter form{flex-direction:column;gap:10px}
+  .newsletter input,.newsletter form .button{width:100%;border-radius:3px}
+}
+
+/* APPROVED REFERENCE: centered Stay Connected + Contact sections */
+.newsletter{
+  min-height:450px;
+  padding:88px 7vw 96px;
+  background:#f2eadc;
+  border-top:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.newsletter .eyebrow,
+.contact .eyebrow{
+  margin:0 0 14px;
+}
+.newsletter h2,
+.contact h2{
+  font:400 44px Georgia,serif;
+  color:var(--ink);
+  margin:0 0 18px;
+  line-height:1.12;
+}
+.newsletter > p:not(.eyebrow),
+.contact > p:not(.eyebrow){
+  max-width:none;
+  margin:0 auto;
+  color:#59635b;
+  font-size:16px;
+  line-height:1.7;
+}
+.newsletter form{
+  display:flex;
+  width:min(625px,100%);
+  max-width:625px;
+  margin:27px auto 0;
+}
+.newsletter input{
+  flex:1;
+  min-width:0;
+  height:57px;
+  border:1px solid #d8d2c8;
+  background:#fff;
+  padding:14px 18px;
+  border-radius:0;
+  font-size:16px;
+}
+.newsletter form .button{
+  height:57px;
+  min-width:90px;
+  border-radius:0 3px 3px 0;
+}
+.contact{
+  min-height:390px;
+  padding:88px 7vw 100px;
+  background:#fffdf9;
+  border-top:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.contact h2{
+  max-width:none;
+}
+.contact > p:not(.eyebrow){
+  margin:0 auto;
+}
+@media(max-width:800px){
+  .newsletter{
+    min-height:420px;
+    padding:70px 7vw;
+  }
+  .contact{
+    min-height:350px;
+    padding:70px 7vw;
+  }
+  .newsletter h2,
+  .contact h2{
+    font-size:38px;
+  }
+  .newsletter form{
+    flex-direction:row;
+    width:100%;
+  }
+  .newsletter input{
+    width:auto;
+  }
+  .newsletter form .button{
+    width:auto;
+  }
+}
+@media(max-width:520px){
+  .newsletter form{
+    flex-direction:column;
+    gap:10px;
+  }
+  .newsletter input,
+  .newsletter form .button{
+    width:100%;
+    border-radius:3px;
+  }
+}
+
+/* COLLECTION CATEGORY PILL — corrected styling for the actual custom dropdown */
+.category-pill-wrap{
+  position:relative;
+  display:inline-block;
+}
+.category-pill{
+  appearance:none;
+  -webkit-appearance:none;
+  width:238px;
+  height:54px;
+  padding:0 42px 0 20px;
+  border:1px solid #b9c8ba;
+  border-radius:28px;
+  background:#fbfaf5;
+  color:#3f5b48;
+  font-family:Georgia,serif;
+  font-size:18px;
+  line-height:1;
+  text-align:left;
+  cursor:pointer;
+  position:relative;
+  box-shadow:0 4px 12px rgba(63,91,72,.06);
+}
+.category-pill:focus{
+  outline:none;
+  border-color:#9eaf9f;
+  box-shadow:0 0 0 2px rgba(63,91,72,.08);
+}
+.pill-arrow{
+  position:absolute;
+  right:20px;
+  top:50%;
+  transform:translateY(-55%);
+  font-family:Arial,sans-serif;
+  font-size:15px;
+  color:#3f5b48;
+  line-height:1;
+}
+.category-menu{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  width:238px;
+  display:none;
+  flex-direction:column;
+  padding:7px;
+  background:#fbfaf5;
+  border:1px solid #c8d1c8;
+  border-radius:14px;
+  box-shadow:0 10px 28px rgba(36,49,40,.12);
+  z-index:20;
+}
+.category-menu.open{
+  display:flex;
+}
+.category-menu button{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:#3f5b48;
+  font-family:Georgia,serif;
+  font-size:16px;
+  text-align:left;
+  padding:10px 13px;
+  border-radius:9px;
+  cursor:pointer;
+}
+.category-menu button:hover,
+.category-menu button:focus{
+  background:#dfe8dc;
+  outline:none;
+}
+@media(max-width:800px){
+  .category-pill{
+    width:210px;
+  }
+  .category-menu{
+    width:210px;
+  }
+}
+
+/* OPTION A — uniform product image presentation */
+.product-photo{
+  height:270px;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.product-photo img{
+  width:88%;
+  height:88%;
+  object-fit:contain;
+  object-position:center;
+  display:block;
+  padding:0;
+  box-sizing:border-box;
+}
+
+/* COLLECTION ONLY — Glutathione Milk Soap image rotated 90° right */
+.product-photo img.rotate-90{
+  transform:rotate(90deg);
+}
+
+/* SECTION 1 — approved header/navigation redesign */
+.site-header{
+  height:100px;
+  padding:0 3.2vw;
+  background:rgba(255,253,248,.97);
+  border-bottom:1px solid var(--line);
+}
+.site-header .brand{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+}
+.site-header .brand-logo{
+  width:220px;
+  max-height:76px;
+}
+.header-nav{
+  display:flex;
+  align-items:center;
+  gap:30px;
+  min-width:0;
+  flex:1;
+  justify-content:flex-end;
+}
+.header-nav .halal-badge{
+  flex:0 0 auto;
+  width:72px;
+  height:72px;
+  border:1px solid #8fa394;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:var(--green);
+  font-size:23px;
+  line-height:1;
+  font-family:Georgia,serif;
+}
+.header-nav .halal-badge small{
+  margin-top:4px;
+  font:700 9px/1 Inter,Arial,sans-serif;
+  letter-spacing:.08em;
+}
+.header-categories{
+  display:flex;
+  align-items:center;
+  gap:30px;
+  border:0;
+  min-width:0;
+}
+.header-categories a{
+  border:0;
+  padding:8px 0;
+  font-family:Inter,Arial,sans-serif;
+  font-size:15px;
+  font-weight:500;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  color:var(--green);
+}
+.header-categories a:hover{
+  background:transparent;
+  color:var(--accent);
+}
+.header-nav .cart-btn{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:7px 0 7px 5px;
+  border:0;
+  background:transparent;
+  color:var(--green);
+  border-radius:0;
+  font:500 15px Inter,Arial,sans-serif;
+  white-space:nowrap;
+}
+.header-nav .cart-icon{
+  width:28px;
+  height:28px;
+  display:block;
+}
+.header-nav .cart-btn span{
+  margin-left:0;
+  padding:0;
+  background:transparent;
+  color:inherit;
+  border-radius:0;
+}
+.header-nav .cart-label{
+  display:inline;
+}
+.header-nav #cartCount{
+  display:inline;
+}
+@media(max-width:1150px){
+  .site-header{padding:0 2.5vw}
+  .header-nav{gap:18px}
+  .header-categories{gap:17px}
+  .header-categories a{font-size:13px}
+  .header-nav .halal-badge{width:62px;height:62px}
+  .site-header .brand-logo{width:190px}
+}
+@media(max-width:900px){
+  .site-header{
+    height:auto;
+    min-height:82px;
+    padding:14px 5vw;
+  }
+  .header-nav{
+    gap:14px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .header-nav::-webkit-scrollbar{display:none}
+  .header-categories{gap:16px}
+  .header-categories a{font-size:12px}
+  .header-nav .halal-badge{width:54px;height:54px;font-size:18px}
+  .header-nav .halal-badge small{font-size:7px}
+  .site-header .brand-logo{width:165px}
+  .header-nav .cart-label{font-size:13px}
+}
+@media(max-width:700px){
+  .site-header{
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .site-header .brand-logo{width:175px}
+  .header-nav{
+    order:3;
+    flex-basis:100%;
+    justify-content:flex-start;
+    padding-top:4px;
+  }
+  .header-nav .halal-badge{width:50px;height:50px}
+}
+
+/* SECTION 1 — reference-matched header spacing */
+.header-nav{
+  gap:38px;
+}
+.header-categories{
+  gap:46px;
+}
+.header-nav .cart-btn{
+  margin-left:4px;
+}
+@media(max-width:1150px){
+  .header-nav{gap:24px}
+  .header-categories{gap:28px}
+}
+@media(max-width:900px){
+  .header-nav{gap:18px}
+  .header-categories{gap:22px}
+}
+
+/* SECTION 1 — halal/logo/category/cart spacing refinement */
+.site-header{
+  justify-content:flex-start;
+}
+.header-halal{
+  flex:0 0 auto;
+  margin-left:24px;
+}
+.header-nav{
+  flex:1;
+  margin-left:42px;
+  justify-content:flex-start;
+  gap:0;
+}
+.header-categories{
+  gap:46px;
+}
+.header-nav .cart-btn{
+  margin-left:auto;
+  padding-left:18px;
+}
+@media(max-width:1150px){
+  .header-halal{margin-left:18px}
+  .header-nav{margin-left:26px}
+  .header-categories{gap:28px}
+  .header-nav .cart-btn{margin-left:auto}
+}
+@media(max-width:900px){
+  .site-header{
+    justify-content:flex-start;
+  }
+  .header-halal{
+    margin-left:12px;
+  }
+  .header-nav{
+    margin-left:0;
+  }
+  .header-nav .cart-btn{
+    margin-left:28px;
+  }
+}
+@media(max-width:700px){
+  .header-halal{
+    order:2;
+  }
+  .header-nav{
+    order:3;
+  }
+}
+
+/* SECTION 1 — use the circular Halal badge */
+.header-halal{
+  width:72px;
+  height:72px;
+  flex:0 0 72px;
+  border:1.5px solid #8fa394;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:var(--green);
+  font-family:Georgia,serif;
+  font-size:23px;
+  line-height:1;
+  box-sizing:border-box;
+}
+.header-halal small{
+  display:block;
+  margin-top:4px;
+  color:var(--green);
+  font:700 9px/1 Inter,Arial,sans-serif;
+  letter-spacing:.08em;
+}
+@media(max-width:1150px){
+  .header-halal{
+    width:62px;
+    height:62px;
+    flex-basis:62px;
+    font-size:20px;
+  }
+  .header-halal small{font-size:8px}
+}
+@media(max-width:900px){
+  .header-halal{
+    width:54px;
+    height:54px;
+    flex-basis:54px;
+    font-size:18px;
+  }
+  .header-halal small{font-size:7px}
+}
+@media(max-width:700px){
+  .header-halal{
+    width:50px;
+    height:50px;
+    flex-basis:50px;
+  }
+}
+
+/* SECTION 1 — category typography and larger clickable areas: TEST VERSION */
+.header-categories{
+  gap:24px;
+}
+.header-categories a{
+  font-size:30px;
+  padding:12px 20px;
+  line-height:1.15;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:58px;
+}
+@media(max-width:1400px){
+  .header-categories{
+    gap:10px;
+  }
+  .header-categories a{
+    font-size:26px;
+    padding-left:14px;
+    padding-right:14px;
+  }
+}
+@media(max-width:1150px){
+  .header-categories{
+    gap:6px;
+  }
+  .header-categories a{
+    font-size:21px;
+    padding:10px 10px;
+    min-height:48px;
+  }
+}
+@media(max-width:900px){
+  .header-categories{
+    gap:8px;
+  }
+  .header-categories a{
+    font-size:18px;
+    padding:10px 12px;
+    min-height:44px;
+  }
+}
+
+/* SECTION 1 — category typography: revised test to 20px */
+.header-categories{
+  gap:24px;
+}
+.header-categories a{
+  font-size:20px;
+  padding:12px 20px;
+  line-height:1.15;
+  min-height:52px;
+}
+@media(max-width:1400px){
+  .header-categories{gap:18px}
+  .header-categories a{
+    font-size:20px;
+    padding-left:16px;
+    padding-right:16px;
+  }
+}
+@media(max-width:1150px){
+  .header-categories{gap:10px}
+  .header-categories a{
+    font-size:19px;
+    padding:10px 12px;
+    min-height:48px;
+  }
+}
+@media(max-width:900px){
+  .header-categories{gap:8px}
+  .header-categories a{
+    font-size:18px;
+    padding:10px 12px;
+    min-height:44px;
+  }
+}
+
+/* SECTION 1 — category spacing reduced by half */
+.header-categories{
+  gap:12px;
+}
+@media(max-width:1400px){
+  .header-categories{gap:9px}
+}
+@media(max-width:1150px){
+  .header-categories{gap:5px}
+}
+@media(max-width:900px){
+  .header-categories{gap:4px}
+}
+
+/* SECTION 2 — Collection moved directly below the header */
+.shop{
+  padding:0;
+}
+.collection-banner{
+  min-height:245px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  position:relative;
+  overflow:visible;
+  background-image:
+    linear-gradient(to right, rgba(248,245,237,.08) 0%, rgba(248,245,237,.45) 24%, rgba(248,245,237,.68) 50%, rgba(248,245,237,.45) 76%, rgba(248,245,237,.08) 100%),
+    url("nutrileaf-story-herbal.png");
+  background-size:cover;
+  background-position:center 52%;
+  background-repeat:no-repeat;
+}
+.collection-banner-content{
+  position:relative;
+  z-index:2;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:28px 5vw 32px;
+}
+.collection-banner .eyebrow{
+  margin:0 0 5px;
+}
+.collection-banner h2{
+  margin:0;
+  color:var(--green);
+  font:400 56px/1.05 Georgia,serif;
+}
+.collection-divider{
+  width:150px;
+  height:18px;
+  margin:7px 0 10px;
+  position:relative;
+  color:#aebcae;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.collection-divider::before,
+.collection-divider::after{
+  content:"";
+  width:62px;
+  height:1px;
+  background:#b8c4b8;
+  position:absolute;
+  top:50%;
+}
+.collection-divider::before{left:0}
+.collection-divider::after{right:0}
+.collection-divider span{
+  font-size:10px;
+  color:#8fa394;
+  transform:rotate(45deg);
+}
+.collection-banner .category-pill-wrap{
+  display:inline-block;
+}
+.collection-banner .category-menu{
+  left:50%;
+  right:auto;
+  transform:translateX(-50%);
+}
+.shop .products{
+  padding:34px 7vw 90px;
+}
+@media(max-width:800px){
+  .collection-banner{
+    min-height:215px;
+  }
+  .collection-banner h2{
+    font-size:44px;
+  }
+  .shop .products{
+    padding:28px 5vw 70px;
+  }
+}
+
+/* SECTION 2 — remove small Collection eyebrow and rebalance heading */
+.collection-banner h2{
+  margin:0 0 2px;
+}
+
+/* HERO REMOVED — Section no longer displayed */
+.hero,
+.hero::before,
+.hero-content,
+.hero-art{
+  display:none !important;
+}
+
+/* SECTION — CUSTOMER REVIEWS */
+.reviews{
+  position:relative;
+  overflow:hidden;
+  min-height:760px;
+  padding:88px 7vw 92px;
+  background:#f7f4eb;
+}
+.reviews-backdrop{
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(to right,
+      rgba(248,245,237,.72) 0%,
+      rgba(248,245,237,.44) 24%,
+      rgba(248,245,237,.14) 50%,
+      rgba(248,245,237,.44) 76%,
+      rgba(248,245,237,.72) 100%
+    ),
+    url("nutrileaf-story-herbal.png");
+  background-size:cover;
+  background-position:center 55%;
+  background-repeat:no-repeat;
+  pointer-events:none;
+}
+.reviews-content{
+  position:relative;
+  z-index:2;
+  max-width:1180px;
+  margin:0 auto;
+  text-align:center;
+}
+.review-eyebrow{
+  margin:0 0 7px;
+  color:#657c6a;
+  font:700 11px/1 Inter,Arial,sans-serif;
+  letter-spacing:.2em;
+}
+.reviews h2{
+  margin:0;
+  color:var(--green);
+  font:400 52px/1.08 Georgia,serif;
+}
+.review-divider{
+  width:150px;
+  height:18px;
+  margin:9px auto 25px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#8fa394;
+}
+.review-divider::before,.review-divider::after{
+  content:"";
+  width:62px;
+  height:1px;
+  background:#b8c4b8;
+  position:absolute;
+  top:50%;
+}
+.review-divider::before{left:0}
+.review-divider::after{right:0}
+.review-divider span{
+  font-size:10px;
+  color:#8fa394;
+  transform:rotate(45deg);
+}
+.review-summary{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:42px;
+  margin:0 auto 28px;
+  padding:20px 28px;
+  max-width:700px;
+  background:rgba(251,250,245,.82);
+  border:1px solid rgba(185,200,186,.8);
+  border-radius:18px;
+  box-shadow:0 8px 22px rgba(36,49,40,.06);
+}
+.review-score{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.review-stars,.review-card-stars{
+  color:#657c6a;
+  letter-spacing:.1em;
+}
+.review-stars{font-size:21px}
+.review-score strong{
+  color:var(--green);
+  font:600 20px/1 Georgia,serif;
+}
+.review-score span{
+  color:#667068;
+  font-size:12px;
+}
+.rating-breakdown{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px 15px;
+  color:#667068;
+  font-size:12px;
+}
+.review-controls{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  margin:0 auto 28px;
+  max-width:1080px;
+  padding:0 2px;
+}
+.rating-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.review-filter{
+  border:1px solid #b9c8ba;
+  background:rgba(251,250,245,.86);
+  color:#3f5b48;
+  padding:9px 14px;
+  border-radius:20px;
+  font:500 13px/1 Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+.review-filter:hover,.review-filter.active{
+  background:#dfe8dc;
+}
+.review-product-filter{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#3f5b48;
+  font:500 13px Inter,Arial,sans-serif;
+}
+.review-product-filter select{
+  width:270px;
+  height:42px;
+  padding:0 36px 0 14px;
+  border:1px solid #b9c8ba;
+  border-radius:22px;
+  background:#fbfaf5;
+  color:#3f5b48;
+  font:16px Georgia,serif;
+  cursor:pointer;
+}
+.review-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+  text-align:left;
+}
+.review-card{
+  min-height:235px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:22px;
+  background:rgba(251,250,245,.92);
+  border:1px solid rgba(185,200,186,.9);
+  border-radius:16px;
+  box-shadow:0 8px 20px rgba(36,49,40,.07);
+}
+.review-card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.review-card-stars{
+  font-size:16px;
+}
+.etsy-mark{
+  color:#7a817b;
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.review-text{
+  margin:17px 0 20px;
+  color:#4f5d53;
+  font-size:14px;
+  line-height:1.65;
+  display:-webkit-box;
+  -webkit-line-clamp:7;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.review-card-bottom{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding-top:13px;
+  border-top:1px solid #dfe5df;
+}
+.review-card-bottom strong{
+  color:var(--green);
+  font:600 16px Georgia,serif;
+}
+.review-card-bottom span{
+  color:#7a817b;
+  font-size:11px;
+  line-height:1.4;
+}
+.reviews-more{
+  margin:28px auto 0;
+  display:block;
+  border:1px solid var(--green);
+  background:rgba(251,250,245,.9);
+  color:var(--green);
+  padding:12px 22px;
+  border-radius:24px;
+  font:600 13px Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+.reviews-more:hover{background:#dfe8dc}
+.reviews-empty{
+  margin:30px 0;
+  color:#667068;
+}
+@media(max-width:900px){
+  .reviews{padding:70px 5vw}
+  .reviews h2{font-size:44px}
+  .review-summary{flex-direction:column;gap:18px}
+  .review-controls{flex-direction:column;align-items:stretch}
+  .rating-filters{justify-content:center}
+  .review-product-filter{justify-content:center}
+  .review-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .reviews h2{font-size:38px}
+  .review-product-filter{flex-direction:column}
+  .review-product-filter select{width:min(100%,320px)}
+  .review-grid{grid-template-columns:1fr}
+}
+
+/* CLICKABLE REVIEWS + FULL REVIEW MODAL */
+.review-card{position:relative;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.review-card:hover,.review-card:focus-visible{transform:translateY(-3px);border-color:#91a792;box-shadow:0 13px 28px rgba(36,49,40,.12);outline:none}
+.review-card:focus-visible{box-shadow:0 0 0 3px rgba(101,124,106,.25),0 13px 28px rgba(36,49,40,.12)}
+.review-read-more{margin-top:10px;color:#657c6a;font:600 11px/1 Inter,Arial,sans-serif;letter-spacing:.03em;text-align:right}
+.review-modal-open{overflow:hidden}
+.review-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease}
+.review-modal.open{opacity:1;visibility:visible}
+.review-modal-overlay{position:absolute;inset:0;background:rgba(27,39,31,.62);backdrop-filter:blur(4px)}
+.review-modal-dialog{position:relative;z-index:2;width:min(720px,100%);max-height:min(82vh,760px);overflow:auto;padding:42px 46px 46px;background:#fbfaf5;border:1px solid #c2cec3;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.22);text-align:center;transform:translateY(14px) scale(.98);transition:transform .2s ease}
+.review-modal.open .review-modal-dialog{transform:translateY(0) scale(1)}
+.review-modal-close{position:absolute;top:13px;right:16px;width:38px;height:38px;border:0;border-radius:50%;background:transparent;color:#4d6252;font:300 30px/36px Arial,sans-serif;cursor:pointer}
+.review-modal-close:hover{background:#e8eee6}
+.review-modal-stars{color:#657c6a;font-size:21px;letter-spacing:.1em}
+.review-modal-eyebrow{margin:17px 0 5px;color:#657c6a;font:700 10px/1 Inter,Arial,sans-serif;letter-spacing:.2em}
+.review-modal-dialog h3{margin:0;color:var(--green);font:400 34px/1.15 Georgia,serif}
+.review-modal-divider{width:140px;height:17px;margin:9px auto 14px;position:relative;display:flex;align-items:center;justify-content:center;color:#8fa394}
+.review-modal-divider::before,.review-modal-divider::after{content:"";width:58px;height:1px;background:#b8c4b8;position:absolute;top:50%}
+.review-modal-divider::before{left:0}.review-modal-divider::after{right:0}
+.review-modal-divider span{font-size:9px;transform:rotate(45deg)}
+.review-modal-product{margin:0 auto 22px;color:#68736b;font:500 12px/1.45 Inter,Arial,sans-serif}
+.review-modal-body{padding:24px 18px;border-top:1px solid #e0e6df;border-bottom:1px solid #e0e6df;color:#4d5b51;font:400 17px/1.8 Georgia,serif;text-align:left}
+@media(max-width:600px){
+  .review-modal{padding:12px}
+  .review-modal-dialog{padding:38px 24px 30px;border-radius:18px}
+  .review-modal-dialog h3{font-size:29px}
+  .review-modal-body{font-size:16px;line-height:1.7;padding:20px 5px}
+}
+
+/* REVIEW DATES */
+.review-date{
+  color:#879087;
+  font-size:10px;
+  line-height:1.35;
+}
+.review-modal-date{
+  margin:-12px auto 20px;
+  color:#879087;
+  font:400 11px/1.4 Inter,Arial,sans-serif;
+}
+
+/* REVIEWS → OUR STORY SEPARATION */
+.reviews + .story{
+  margin-top:50px;
+}
+
+/* REVIEW PAGINATION — matching Show Less / Show More pills */
+.reviews-pagination{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  margin-top:28px;
+}
+.reviews-pagination .reviews-more{
+  margin:0;
+  min-width:150px;
+}
+@media(max-width:600px){
+  .reviews-pagination{
+    flex-direction:column;
+    gap:10px;
+  }
+  .reviews-pagination .reviews-more{
+    width:180px;
+  }
+}
+
+/* Ensure the Show Less Reviews pill honors the HTML hidden state */
+.reviews-pagination .reviews-more[hidden]{
+  display:none !important;
+}
+
+/* SMOOTHER REVIEW EXPANSION/COLLAPSE */
+.review-grid{
+  transition:opacity .22s ease, transform .22s ease;
+}
+.review-grid.reviews-changing{
+  opacity:.72;
+  transform:translateY(3px);
+}
+.review-grid.reviews-settled{
+  opacity:1;
+  transform:translateY(0);
+}
+@media(prefers-reduced-motion:reduce){
+  .review-grid,
+  .review-grid.reviews-changing,
+  .review-grid.reviews-settled{
+    transition:none;
+    transform:none;
+  }
+}
+
+/* CART ADD-TOAST — shared primary-page confirmation */
+.toast{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:1200;
+  width:min(360px,calc(100vw - 32px));
+  padding:15px 18px;
+  background:#fff;
+  color:var(--green);
+  border:1px solid #c2cec3;
+  border-radius:14px;
+  box-shadow:0 14px 35px rgba(36,49,40,.16);
+  font-size:14px;
+  line-height:1.4;
+  font-weight:600;
+  display:none;
+}
+@media(max-width:600px){
+  .toast{
+    right:16px;
+    bottom:16px;
+  }
+}
