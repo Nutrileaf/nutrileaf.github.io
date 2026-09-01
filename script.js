@@ -23,6 +23,16 @@ let cart=JSON.parse(localStorage.getItem("nutrileaf-cart-v2")||"[]");
 const API_BASE="https://nutrileaf-api.adam-d-may-20.workers.dev";
 const $=s=>document.querySelector(s);
 function money(n){return "$"+n.toFixed(2)}
+async function loadCatalog(){
+ try {
+  const response=await fetch(`${API_BASE}/products`);
+  if(!response.ok) throw new Error("Catalog unavailable");
+  const payload=await response.json();
+  products.splice(0,products.length,...(payload.products||[]).filter(p=>p.active===1).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:p.price/100})));
+  renderProducts();renderCart();
+ } catch { toast("Catalog is unavailable. Checkout is disabled."); if(checkoutButton) checkoutButton.disabled=true; }
+}
+
 function renderProducts(filter="All"){
  const list=filter==="All"?products:products.filter(p=>p.type===filter);
  $("#products").innerHTML=list.map(p=>`<article class="product" role="link" tabindex="0" onclick="openProduct(${p.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProduct(${p.id})}"><div class="product-photo">${p.image?`<img class="${p.id===13?"rotate-90":""}" src="${p.image}" alt="${p.name}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${p.type}</span><h3>${p.name}</h3><p>${p.desc}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" onclick="event.stopPropagation();addToCart(${p.id})">Add to cart</button></div></div></article>`).join("");
@@ -60,7 +70,7 @@ if(cartDrawer&&closeCart)cartDrawer.addEventListener("click",e=>{if(e.target.id=
 if(checkoutButton)checkoutButton.onclick=()=>{if(!cart.length){toast("Your cart is empty");return}alert("Demo checkout. Next step: connect a payment processor such as Stripe or PayPal.")};
 const newsletterForm=$("#newsletterForm");
 if(newsletterForm)newsletterForm.onsubmit=e=>{e.preventDefault();toast("Thanks for joining Nutrileaf!");e.target.reset()};
-if($("#products"))renderProducts();
+if($("#products"))loadCatalog();
 if($("#cartCount")&&$("#cartItems")&&$("#cartTotal"))renderCart();
 
 
