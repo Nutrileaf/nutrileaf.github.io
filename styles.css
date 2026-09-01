@@ -196,6 +196,27 @@
   text-align:center;
 }
 
+.checkout-dialog{position:fixed;inset:0;z-index:70;display:none;overflow:auto;padding:32px 16px;background:rgba(36,49,40,.55)}
+.checkout-dialog.open{display:grid;place-items:start center}
+.checkout-panel{width:min(680px,100%);margin:auto;background:var(--paper);padding:28px 30px;box-shadow:0 22px 65px rgba(36,49,40,.28)}
+.checkout-notice{margin:20px 0;padding:13px 15px;background:var(--sage);color:var(--green);font-size:13px;line-height:1.5}
+#checkoutForm{display:grid;gap:15px}
+#checkoutForm label{display:grid;gap:6px;color:var(--green);font-size:13px;font-weight:700}
+#checkoutForm label span{font-weight:400;color:#718077}
+#checkoutForm input{width:100%;min-width:0;padding:12px;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit}
+#checkoutForm input:focus{outline:2px solid var(--green);outline-offset:1px}
+.checkout-fields{display:grid;gap:14px}
+.checkout-fields.two-column{grid-template-columns:repeat(2,minmax(0,1fr))}
+.checkout-fields.city-row{grid-template-columns:minmax(0,2fr) minmax(80px,.7fr) minmax(110px,1fr)}
+.checkout-errors{color:#8a2d24;font-size:13px}
+.checkout-errors:empty{display:none}
+.checkout-errors p{margin:4px 0}
+.checkout-status{margin-top:18px;color:var(--green);line-height:1.55}
+.pending-confirmation{padding:20px;background:var(--sage);border:1px solid #c2cec3}
+.pending-confirmation strong{font:24px Georgia,serif}
+.button:disabled{cursor:not-allowed;opacity:.6}
+@media(max-width:600px){.checkout-panel{padding:22px 18px}.checkout-fields.two-column,.checkout-fields.city-row{grid-template-columns:1fr}}
+
 /* CONTACT — same restrained botanical presentation */
 .contact{
   padding:88px 10vw;

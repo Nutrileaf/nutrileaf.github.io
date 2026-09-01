@@ -51,17 +51,19 @@
 <section class="product-detail" id="productDetail" aria-live="polite"></section>
 </div>
 </main>
-<script src="script.js"></script>
-<script>
+<script type="module" src="script.js"></script>
+<script type="module">
+await window.nutrileafCatalogReady;
 const id=new URLSearchParams(location.search).get("id");
-const product=products.find(p=>p.id===Number(id));
+const product=window.nutrileafProducts.find(p=>String(p.id)===id);
 const detail=document.querySelector("#productDetail");
 if(!product){
   detail.innerHTML="<div><h1>Product not found</h1><p>The product you're looking for is not available.</p></div>";
 }else{
   let qty=1;
-  const image=product.image?`<img src="${product.image}" alt="${product.name} label">`:`<div class="product-detail-symbol">${product.symbol}</div>`;
-  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${product.type}</span><h1>${product.name}</h1><p class="product-detail-description">${product.desc}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${product.ingredients}`:""}</p><div class="product-detail-price">${money(product.price)}</div><label class="product-quantity-label" for="qtyValue">Quantity</label><div class="quantity-control" aria-label="Quantity"><button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button><input id="qtyValue" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Product quantity"><button type="button" id="qtyPlus" aria-label="Increase quantity">+</button></div><button type="button" class="detail-add" id="detailAdd">Add to cart</button><div class="detail-note">Choose a quantity using − / + or type the number directly.</div></div>`;
+  const safe=window.nutrileafEscapeHtml;
+  const image=product.image?`<img src="${safe(product.image)}" alt="${safe(product.name)} label">`:`<div class="product-detail-symbol">${safe(product.symbol)}</div>`;
+  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${safe(product.type)}</span><h1>${safe(product.name)}</h1><p class="product-detail-description">${safe(product.desc)}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${safe(product.ingredients)}`:""}</p><div class="product-detail-price">${window.nutrileafMoney(product.price)}</div><label class="product-quantity-label" for="qtyValue">Quantity</label><div class="quantity-control" aria-label="Quantity"><button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button><input id="qtyValue" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Product quantity"><button type="button" id="qtyPlus" aria-label="Increase quantity">+</button></div><button type="button" class="detail-add" id="detailAdd">Add to cart</button><div class="detail-note">Choose a quantity using − / + or type the number directly.</div></div>`;
   const qtyValue=document.querySelector("#qtyValue");
   const normalizeQty=()=>{
     const value=Math.max(1,parseInt(qtyValue.value,10)||1);
@@ -82,7 +84,7 @@ if(!product){
   let productToastTimer;
   document.querySelector("#detailAdd").onclick=()=>{
     const amount=normalizeQty();
-    addToCart(product.id,amount);
+    window.nutrileafAddToCart(product.id,amount);
     document.querySelector("#productToastMessage").textContent=`✓ ${amount} × ${product.name} added to cart`;
     productToast.classList.add("show");
     clearTimeout(productToastTimer);

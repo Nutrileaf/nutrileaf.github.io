@@ -1,0 +1,18 @@
+name: P14 Storefront Verification
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [p14-storefront-authoritative-checkout-20260901]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: node --check script.js
+      - run: node --check checkout-state.js
+      - run: node --check checkout-submit.js
