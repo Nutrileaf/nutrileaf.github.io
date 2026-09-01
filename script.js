@@ -1,5 +1,6 @@
 import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, checkoutKeyFor, validateCheckoutRequest } from "./checkout-state.js";
 import { submitCheckout } from "./checkout-submit.js";
+import { submitPaymentInitiation } from "./payment-initiation.js";
 
 const products=[];
 let cart=[];
@@ -127,10 +128,21 @@ if(checkoutForm){
   if(result.action==="confirm"){
    const order=result.payload?.order||{};
    checkoutForm.hidden=true;
-   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>Payment and fulfillment have not started.</p></div>`;
-   cart=[];save();
+   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>TEST only. Select a payment method to continue to its hosted TEST/Sandbox page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe TEST</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal Sandbox</button></div></div>`;
+   checkoutStatus.querySelectorAll("[data-payment-provider]").forEach(button=>button.addEventListener("click",async()=>{
+    const provider=button.dataset.paymentProvider;
+    const storageKey=`nutrileaf-payment-operation:${order.id}:${provider}`;
+    let operationId=localStorage.getItem(storageKey);
+    if(!operationId){operationId=crypto.randomUUID();localStorage.setItem(storageKey,operationId)}
+    button.disabled=true;checkoutStatus.setAttribute("aria-busy","true");
+    const payment=await submitPaymentInitiation({apiBase:API_BASE,orderId:order.id,provider,operationId});
+    checkoutStatus.removeAttribute("aria-busy");button.disabled=false;
+    if(payment.action==="redirect"&&typeof payment.payload?.redirect_url==="string"){
+      cart=[];save();localStorage.removeItem(storageKey);localStorage.removeItem("nutrileaf-checkout-draft");location.assign(payment.payload.redirect_url);return;
+    }
+    checkoutStatus.insertAdjacentHTML("beforeend",`<p class="checkout-errors">${payment.action==="conflict"?"This order already has a payment attempt. Please use its existing payment page.":"The TEST payment service is temporarily unavailable. Retry safely."}</p>`);
+   }));
    localStorage.removeItem("nutrileaf-checkout-attempt");
-   localStorage.removeItem("nutrileaf-checkout-draft");
   }else if(result.action==="inline-error"){
    showCheckoutErrors({request:message||"Check the highlighted order details and try again."});
    checkoutStatus.textContent="The pending order was not created.";
