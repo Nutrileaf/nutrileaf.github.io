@@ -19,7 +19,8 @@ const products=[
 {id:23,name:"Ginger Hot Cream",ingredients:"Ginger extract, organic shea butter, organic arnica oil, plant-based oils, camphor, menthol crystals, lavender, eucalyptus and peppermint essential oils.",type:"Body Care",price:15,desc:"A handmade cream made with ginger extract, organic shea butter, organic arnica oil, plant-based oils, camphor, menthol crystals, and lavender, eucalyptus, and peppermint essential oils.",symbol:"❋",image:"https://i.etsystatic.com/18990162/r/il/80cdb2/4844717868/il_fullxfull.4844717868_5g6a.jpg"},
 {id:24,name:"Organic Aloe Vera & Ginger Hair Mask with Hyaluronic Acid",ingredients:"Hyaluronic Acid, Organic Aloe Vera, Organic Ginger Extract, Niacinamide, Glycerin, Organic Pumpkin Seed Oil, Organic Rosemary Oil, Avocado Oil, Organic Hemp Seed Oil, Organic Neem Oil and Ginger Essential Oil.",type:"Hair Care",price:22,desc:"A plant-powered hair mask featuring hyaluronic acid, organic aloe vera, organic ginger extract, niacinamide, glycerin, pumpkin seed oil, rosemary oil, avocado oil, hemp seed oil, and neem oils.",symbol:"❋",image:"https://i.etsystatic.com/18990162/r/il/e11794/7539194738/il_fullxfull.7539194738_3tir.jpg"}
 ];
-let cart=JSON.parse(localStorage.getItem("nutrileaf-cart")||"[]");
+let cart=JSON.parse(localStorage.getItem("nutrileaf-cart-v2")||"[]");
+const API_BASE="https://nutrileaf-api.adam-d-may-20.workers.dev";
 const $=s=>document.querySelector(s);
 function money(n){return "$"+n.toFixed(2)}
 function renderProducts(filter="All"){
@@ -27,16 +28,16 @@ function renderProducts(filter="All"){
  $("#products").innerHTML=list.map(p=>`<article class="product" role="link" tabindex="0" onclick="openProduct(${p.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProduct(${p.id})}"><div class="product-photo">${p.image?`<img class="${p.id===13?"rotate-90":""}" src="${p.image}" alt="${p.name}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${p.type}</span><h3>${p.name}</h3><p>${p.desc}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" onclick="event.stopPropagation();addToCart(${p.id})">Add to cart</button></div></div></article>`).join("");
 }
 function openProduct(id){window.location.href=`product.html?id=${id}`}
-function addToCart(id,quantity=1){const p=products.find(x=>x.id===id);if(!p)return;const item=cart.find(x=>x.id===id);item?item.qty+=quantity:cart.push({...p,qty:quantity});save();toast(`${quantity} × ${p.name} added to cart`)}
-function save(){localStorage.setItem("nutrileaf-cart",JSON.stringify(cart));renderCart()}
+function addToCart(id,quantity=1){const p=products.find(x=>x.id===id);if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});save();toast(`${quantity} × ${p.name} added to cart`)}
+function save(){localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));renderCart()}
 function renderCart(){
  const cartCount=$("#cartCount"),cartItems=$("#cartItems"),cartTotal=$("#cartTotal");
  if(!cartCount||!cartItems||!cartTotal)return;
- cartCount.textContent=cart.reduce((s,x)=>s+x.qty,0);
- cartItems.innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><strong>${x.name}</strong><div>${x.qty} × ${money(x.price)}</div></div><button class="remove" onclick="removeItem(${x.id})">Remove</button></div>`).join(""):"<p>Your cart is empty.</p>";
- cartTotal.textContent=money(cart.reduce((s,x)=>s+x.price*x.qty,0));
+ cartCount.textContent=cart.reduce((s,x)=>s+x.quantity,0);
+ cartItems.innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><strong>${x.name}</strong><div>${x.quantity} × ${money((products.find(p=>String(p.id)===x.product_id)||{}).price||0)}</div></div><button class="remove" onclick="removeItem("${x.product_id}")">Remove</button></div>`).join(""):"<p>Your cart is empty.</p>";
+ cartTotal.textContent=money(cart.reduce((s,x)=>s+(((products.find(p=>String(p.id)===x.product_id)||{}).price||0)*x.quantity),0));
 }
-function removeItem(id){cart=cart.filter(x=>x.id!==id);save()}
+function removeItem(id){cart=cart.filter(x=>x.product_id!==String(id));save()}
 function toast(msg){const t=$("#toast");if(!t)return;t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
 const categoryPill=$("#categoryPill");
 const categoryPillLabel=$("#categoryPillLabel");
