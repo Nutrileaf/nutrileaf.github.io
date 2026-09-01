@@ -91,7 +91,7 @@
 - Modify: `README.md`
 - Modify: `docs/superpowers/plans/2026-09-01-p14-storefront-authoritative-checkout.md`
 
-- [ ] Run `npm test` (Node storefront tests), syntax validation for changed JavaScript, and a static-file structural review.
-- [ ] Inspect the exact branch diff to confirm it contains no API-worker, migration, provider, credential, or deployment change.
-- [ ] Document the exact tests and the activation gate: P13 migration `0005` plus reviewed Worker deployment are separate future actions.
+- [x] Run `npm test` (Node storefront tests), syntax validation for changed JavaScript, and a static-file structural review.
+- [x] Inspect the exact branch diff to confirm it contains no API-worker, migration, provider, credential, or deployment change.
+- [x] Document the exact tests and the activation gate: P13 migration `0005` plus reviewed Worker deployment are separate future actions.
 - [ ] Create a PR against `main`, run its checks, and mark it ready only after those checks pass.
