@@ -136,11 +136,37 @@
 <div class="cart-drawer" id="cartDrawer" aria-hidden="true">
   <div class="cart-panel"><div class="cart-head"><h2>Your cart</h2><button id="closeCart">×</button></div>
   <div id="cartItems"></div><div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>
-  <button class="button full" id="checkoutButton">Proceed to checkout</button>
-  <p class="tiny">Demo checkout: connect Stripe/PayPal before accepting live payments.</p></div>
+  <button class="button full" id="checkoutButton" disabled>Proceed to checkout</button>
+  <p class="tiny">TEST checkout creates a pending order only. Payment and fulfillment do not start.</p></div>
 </div>
+<section class="checkout-dialog" id="checkoutDialog" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="checkoutTitle">
+  <div class="checkout-panel">
+    <div class="cart-head"><h2 id="checkoutTitle">Delivery details</h2><button type="button" id="closeCheckout" aria-label="Close checkout">×</button></div>
+    <p class="checkout-notice">TEST only — this creates a pending order. No payment or shipment will be started.</p>
+    <form id="checkoutForm" novalidate>
+      <div class="checkout-fields two-column">
+        <label>First name<input name="first_name" autocomplete="given-name" required></label>
+        <label>Last name<input name="last_name" autocomplete="family-name" required></label>
+      </div>
+      <label>Email<input name="email" type="email" autocomplete="email" required></label>
+      <label>Phone <span>(optional)</span><input name="phone" type="tel" autocomplete="tel"></label>
+      <label>Recipient name<input name="name" autocomplete="name" required></label>
+      <label>Street address<input name="address_line1" autocomplete="address-line1" required></label>
+      <label>Apartment, suite, etc. <span>(optional)</span><input name="address_line2" autocomplete="address-line2"></label>
+      <div class="checkout-fields city-row">
+        <label>City<input name="city" autocomplete="address-level2" required></label>
+        <label>State<input name="state" autocomplete="address-level1" maxlength="2" required></label>
+        <label>ZIP code<input name="postal_code" autocomplete="postal-code" inputmode="numeric" required></label>
+      </div>
+      <input name="country" type="hidden" value="US">
+      <div class="checkout-errors" id="checkoutErrors" role="alert"></div>
+      <button class="button full" id="checkoutSubmit" type="submit">Create pending order</button>
+    </form>
+    <div class="checkout-status" id="checkoutStatus" aria-live="polite"></div>
+  </div>
+</section>
 <div class="toast" id="toast"></div>
 <footer><span>© 2026 <span class="inline-brand">Nutrileaf</span></span><span>Handmade • Botanical • Beauty</span></footer>
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>

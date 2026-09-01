@@ -2,6 +2,14 @@ function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+export function normalizeCatalog(products) {
+  if (!Array.isArray(products)) return [];
+  return products.filter(product =>
+    typeof product?.id === "string" && product.id.trim() &&
+    (product.active === 1 || product.active === true)
+  );
+}
+
 export function normalizeCart(cart) {
   if (!Array.isArray(cart)) return [];
   const quantities = new Map();
@@ -34,6 +42,27 @@ export function createCheckoutRequest({ cart, customer }) {
     },
     items: normalizeCart(cart)
   };
+}
+
+export function checkoutFingerprint(request) {
+  return JSON.stringify(request);
+}
+
+export function validateCheckoutRequest(request) {
+  const errors = {};
+  const customer = request?.customer || {};
+  const address = customer.shipping_address || {};
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email || "")) errors.email = "Enter a valid email address.";
+  if (!customer.first_name) errors.first_name = "Enter a first name.";
+  if (!customer.last_name) errors.last_name = "Enter a last name.";
+  if (!address.name) errors.name = "Enter the recipient name.";
+  if (!address.address_line1) errors.address_line1 = "Enter a street address.";
+  if (!address.city) errors.city = "Enter a city.";
+  if (!/^[A-Z]{2}$/.test(address.state || "")) errors.state = "Enter a two-letter state code.";
+  if (!/^\d{5}(?:-\d{4})?$/.test(address.postal_code || "")) errors.postal_code = "Enter a valid US ZIP code.";
+  if (address.country !== "US") errors.country = "Shipping country must be US.";
+  if (!Array.isArray(request?.items) || request.items.length === 0) errors.items = "Add at least one available product to your cart.";
+  return errors;
 }
 
 export function checkoutKeyFor(fingerprint, stored) {

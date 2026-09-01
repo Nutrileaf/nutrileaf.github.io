@@ -33,13 +33,13 @@
 - Produces `normalizeCatalog(products)`, `normalizeCart(cart)`, `createCheckoutRequest({ cart, customer })`, `checkoutKeyFor(fingerprint, stored)`, and `checkoutResultAction(status)`.
 - `createCheckoutRequest` returns only the P13 `customer` object and `items: [{ product_id, quantity }]`.
 
-- [ ] Write failing Node tests that reject a cart item without a string `product_id`, remove browser price/name fields from the request, and preserve only positive integer quantities.
-- [ ] Run `node --test tests/checkout-state.test.mjs`; expect failure because `checkout-state.js` is absent.
-- [ ] Implement the minimal pure state module with no network calls or provider references.
-- [ ] Re-run the focused test; expect all assertions to pass.
-- [ ] Add failing tests for same-input retry key reuse, key replacement after a successful response, and the status mapping for 201, 400, 404, 409, and 5xx/network failure.
-- [ ] Implement the smallest deterministic fingerprint/key and status-action helpers to satisfy those tests.
-- [ ] Run `node --test tests/checkout-state.test.mjs` and commit the module, tests, and test script.
+- [x] Write failing Node tests that reject a cart item without a string `product_id`, remove browser price/name fields from the request, and preserve only positive integer quantities.
+- [x] Run `node --test tests/checkout-state.test.mjs`; expect failure because `checkout-state.js` is absent.
+- [x] Implement the minimal pure state module with no network calls or provider references.
+- [x] Re-run the focused test; expect all assertions to pass.
+- [x] Add failing tests for same-input retry key reuse, key replacement after a successful response, and the status mapping for 201, 400, 404, 409, and 5xx/network failure.
+- [x] Implement the smallest deterministic fingerprint/key and status-action helpers to satisfy those tests.
+- [x] Run `node --test tests/checkout-state.test.mjs` and commit the module, tests, and test script.
 
 ### Task 2: Catalog-backed storefront and cart migration
 
@@ -55,13 +55,13 @@
 - Stores `nutrileaf-cart-v2` as `[{ product_id, quantity }]`.
 - Temporarily reads old `nutrileaf-cart` only to discard it with a clear cart-refresh message; it must not map numeric legacy IDs to authoritative IDs.
 
-- [ ] Write a failing structural test requiring `script.js` to reference `/products`, `nutrileaf-cart-v2`, and `product_id`, and prohibiting checkout request construction from `.price` or `.name`.
-- [ ] Run `node --test tests/storefront-structure.test.mjs`; expect failure against the static hard-coded product array.
-- [ ] Add catalog loading with a configured TEST API base URL, rendering only active API products.
-- [ ] Replace cart entries with product IDs and quantities; derive all cart display details from the loaded catalog.
-- [ ] Keep product-page add-to-cart behavior by resolving the page query ID against API product IDs.
-- [ ] Handle catalog loading failure with a visible unavailable message and disabled checkout, not stale static price fallback.
-- [ ] Re-run focused tests and commit.
+- [x] Write a failing structural test requiring `script.js` to reference `/products`, `nutrileaf-cart-v2`, and `product_id`, and prohibiting checkout request construction from `.price` or `.name`.
+- [x] Run `node --test tests/storefront-structure.test.mjs`; expect failure against the static hard-coded product array.
+- [x] Add catalog loading with a configured TEST API base URL, rendering only active API products.
+- [x] Replace cart entries with product IDs and quantities; derive all cart display details from the loaded catalog.
+- [x] Keep product-page add-to-cart behavior by resolving the page query ID against API product IDs.
+- [x] Handle catalog loading failure with a visible unavailable message and disabled checkout, not stale static price fallback.
+- [x] Re-run focused tests and commit.
 
 ### Task 3: Checkout form and P13 submission flow
 
@@ -76,13 +76,13 @@
 - Calls `POST /checkout/orders` with `Content-Type: application/json` and `Idempotency-Key`.
 - Renders P13 response `{ order: { order_number, status, subtotal, tax, shipping, total, currency, items } }`.
 
-- [ ] Write failing tests for request headers/body, a disabled submit state, retrying a network/5xx failure with the same key, and handling 201/400/404/409 without payment navigation.
-- [ ] Run `node --test tests/checkout-submission.test.mjs`; expect the absent submission module/UI behavior to fail.
-- [ ] Add an accessible checkout form with P13-required customer and US shipping fields.
-- [ ] Wire submission through the pure request builder; never send display price/total/name.
-- [ ] Render a PENDING-order confirmation only after 201; preserve the attempt key and form data for retryable failure.
-- [ ] Handle 404 by refreshing catalog, 409 by requiring a new checkout attempt, and 400 inline without clearing form data.
-- [ ] Re-run the focused tests and commit.
+- [x] Write failing tests for request headers/body, a disabled submit state, retrying a network/5xx failure with the same key, and handling 201/400/404/409 without payment navigation.
+- [x] Run `node --test tests/checkout-submission.test.mjs`; expect the absent submission module/UI behavior to fail.
+- [x] Add an accessible checkout form with P13-required customer and US shipping fields.
+- [x] Wire submission through the pure request builder; never send display price/total/name.
+- [x] Render a PENDING-order confirmation only after 201; preserve the attempt key and form data for retryable failure.
+- [x] Handle 404 by refreshing catalog, 409 by requiring a new checkout attempt, and 400 inline without clearing form data.
+- [x] Re-run the focused tests and commit.
 
 ### Task 4: Repository verification and handoff
 

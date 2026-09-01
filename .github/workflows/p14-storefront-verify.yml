@@ -15,3 +15,4 @@ jobs:
       - run: npm test
       - run: node --check script.js
       - run: node --check checkout-state.js
+      - run: node --check checkout-submit.js

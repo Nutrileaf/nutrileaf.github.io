@@ -24,3 +24,15 @@ test("preserves a retry action for network and server failures", async () => {
   assert.equal(failure.action,"retry");
   assert.equal(server.action,"retry");
 });
+
+test("maps validation, unavailable product, and idempotency conflict without payment navigation", async () => {
+  for (const [status, action] of [[400, "inline-error"], [404, "refresh-catalog"], [409, "restart-attempt"]]) {
+    const result = await submitCheckout({
+      apiBase: "https://api.example.test",
+      body: requestBody,
+      idempotencyKey: "checkout-test-1",
+      fetchImpl: async () => new Response(JSON.stringify({ error: { message: "Test error" } }), { status })
+    });
+    assert.equal(result.action, action);
+  }
+});

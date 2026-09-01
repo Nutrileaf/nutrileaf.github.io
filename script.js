@@ -1,50 +1,48 @@
-const products=[
-{id:11,name:"Turmeric-Carrot Glow Bar Soap",ingredients:"Turmeric, Organic Carrot Extract, Goat Milk, Citric Acid, Organic Coconut Oil, Extra Virgin Olive Oil, Palm Oil, Soy Bean Oil, Castor Oil, Manuka Honey, Halal Tallow, Lavender Essential Oil, Spearmint Essential Oil, Eucalyptus Essential Oil, Peppermint Essential Oil, Glycerin, Water & Lye.",type:"Soap",price:8,desc:"A handmade bar soap with turmeric, organic carrot extract, goat milk, and essential oils.",symbol:"✿",image:"turmeric-carrot-approved-ad.png"},
-{id:9,name:"Artisan Herbal Tea",type:"Tea",price:14,desc:"A handcrafted herbal tea blend for a warm, comforting cup.",symbol:"☕"},
-{id:10,name:"Botanical Tea Blend",type:"Tea",price:16,desc:"A small-batch botanical tea blend made for a relaxing ritual.",symbol:"☕"},
-{id:4,name:"Aloe Vera Plant",type:"Plant",price:12,desc:"A living botanical for your home or sunny windowsill.",symbol:"♧"},
-{id:8,name:"Starter Plant Bundle",type:"Plant",price:28,desc:"A curated pair of easy-care plants for your space.",symbol:"♧"},
+import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, checkoutKeyFor, validateCheckoutRequest } from "./checkout-state.js";
+import { submitCheckout } from "./checkout-submit.js";
 
-{id:12,name:"Organic Sulfur Soap",ingredients:"Organic Sulfur powder, organic extra virgin olive oil, organic coconut oil, soy oil, castor oil, palm oil, Manuka honey.",type:"Soap",price:8.49,desc:"Handmade sulfur soap formulated with organic sulfur powder, plant-based oils, and Manuka honey. The Etsy listing describes it for blemish-prone skin, excess-oil cleansing, and a deep-cleansing routine.",symbol:"✿",image:"https://i.etsystatic.com/18990162/r/il/7e3c8d/8198031710/il_fullxfull.8198031710_1usj.jpg"},
-{id:13,name:"Glutathione Milk Soap",ingredients:"Glutathione, Kojic Acid, goat milk, essential oils and other natural ingredients described in the Etsy listing.",type:"Soap",price:8.49,desc:"A handmade, cold-processed goat milk soap featuring glutathione and kojic acid, with essential oils rather than fragrance. Small-batch colors may vary.",symbol:"✿",image:"https://i.etsystatic.com/18990162/r/il/da88d0/6541017408/il_fullxfull.6541017408_9gpl.jpg"},
-{id:14,name:"Organic Carrot Soap",ingredients:"Organic carrot juice, apple cider vinegar, Manuka honey, glycerin, plant-based oils and lavender essential oil.",type:"Soap",price:6,desc:"A handmade bar made with organic carrot juice, plant-based oils, Manuka honey, and lavender essential oil, created without synthetic ingredients according to the Etsy listing.",symbol:"✿",image:"https://i.etsystatic.com/18990162/r/il/de1100/3636420478/il_fullxfull.3636420478_sf64.jpg"},
-{id:15,name:"Organic Moringa & Aloe Vera Soap",ingredients:"Organic moringa extract and powder, organic aloe vera extract, organic raw honey, apple cider vinegar, coconut oil, extra virgin olive oil, palm oil, distilled water and lavender essential oil.",type:"Soap",price:8,desc:"A botanical soap made with organic moringa extract and powder, organic aloe vera, raw honey, apple cider vinegar, and saponified coconut, olive, and palm oils.",symbol:"✿",image:"https://i.etsystatic.com/18990162/r/il/882c52/8268358845/il_fullxfull.8268358845_8drs.jpg"},
-{id:16,name:"Tawas-Kalamansi Face & Body Soap",ingredients:"Tawas powder (alum), kalamansi extract, saponified oils and essential oils.",type:"Soap",price:8,desc:"A handmade, cold-processed face and body soap made in small batches with tawas powder (alum) and kalamansi extract, scented with essential oils.",symbol:"✿",image:"https://i.etsystatic.com/18990162/r/il/f22ab9/8279511731/il_fullxfull.8279511731_tvd1.jpg"},
-{id:17,name:"Gluta-Kojic Beauty Soap",ingredients:"Glutathione, Kojic Acid and essential oils, with the remaining natural soap ingredients described in the Etsy listing.",type:"Soap",price:8.49,desc:"A handmade, cold-processed soap featuring glutathione and kojic acid, scented with essential oils rather than fragrance. Soap designs may vary by molder availability.",symbol:"✿",image:"https://i.etsystatic.com/18990162/r/il/4ff030/6542100969/il_fullxfull.6542100969_mupy.jpg"},
-{id:18,name:"Retinol + Rose Water-Collagen Peptide Day Cream",ingredients:"Retinyl Palmitate, rose water, rose hydrosol, collagen peptides, niacinamide, vitamin E, organic aloe vera extract, pumpkin seed oil and other ingredients listed by the seller.",type:"Facial Care",price:35,desc:"A made-to-order 2 oz day cream featuring retinyl palmitate, rose water and hydrosol, collagen peptides, niacinamide, vitamin E, organic aloe vera, and pumpkin seed oil.",symbol:"✦",image:"https://i.etsystatic.com/18990162/r/il/340040/3792159476/il_fullxfull.3792159476_h04y.jpg"},
-{id:19,name:"Hyaluronic Acid & Glycolic Acid Anti-Aging Neck Cream",ingredients:"Hyaluronic Acid, Glycolic Acid, Niacinamide and Vitamin C-L Ascorbic Acid.",type:"Facial Care",price:35,desc:"A made-to-order neck cream with hyaluronic acid, glycolic acid, niacinamide, and vitamin C-L ascorbic acid as its listed active ingredients.",symbol:"✦",image:"https://i.etsystatic.com/18990162/r/il/314cfd/2758906209/il_fullxfull.2758906209_qqf8.jpg"},
-{id:20,name:"Retinol & Hyaluronic Acid Overnight Skin Repair Cream",ingredients:"Vitamin A, Hyaluronic Acid, Niacinamide, Allantoin, Kojic Acid, Vitamin C-L Ascorbic Acid, Aloe Vera, DL-Panthenol, Collagen Peptides, Alpha Tocopherol, Aspen Bark, Rose Water, Rose Hydrosol, Organic Raw Honey, Glycerin and Beeswax.",type:"Facial Care",price:35,desc:"A natural and handmade overnight cream formulated with vitamin A, hyaluronic acid, niacinamide, allantoin, kojic acid, vitamin C, aloe vera, panthenol, collagen peptides, vitamin E, and rose water/hydrosol.",symbol:"✦",image:"https://i.etsystatic.com/18990162/r/il/9587d2/3792258450/il_fullxfull.3792258450_g8ms.jpg"},
-{id:21,name:"Kojic Body Lotion",ingredients:"Kojic Acid and the remaining lotion ingredients described in the Etsy listing.",type:"Body Care",price:15,desc:"An 8 oz handmade body lotion with kojic acid as its main active ingredient. Packaging may vary depending on available containers and the lotion is scented with essential oils.",symbol:"❋",image:"https://i.etsystatic.com/18990162/r/il/bf3839/6903385776/il_fullxfull.6903385776_1tvm.jpg"},
-{id:22,name:"Hyaluronic Acid Body Serum",ingredients:"Hyaluronic Acid, Niacinamide, Organic Aloe Vera and Vitamin E, with 85% organic oils and raw materials.",type:"Body Care",price:20,desc:"A body serum formulated with 85% organic oils and raw materials, featuring hyaluronic acid, niacinamide, organic aloe vera, and vitamin E.",symbol:"❋",image:"https://i.etsystatic.com/18990162/r/il/eaa642/4700772959/il_fullxfull.4700772959_qsiu.jpg"},
-{id:23,name:"Ginger Hot Cream",ingredients:"Ginger extract, organic shea butter, organic arnica oil, plant-based oils, camphor, menthol crystals, lavender, eucalyptus and peppermint essential oils.",type:"Body Care",price:15,desc:"A handmade cream made with ginger extract, organic shea butter, organic arnica oil, plant-based oils, camphor, menthol crystals, and lavender, eucalyptus, and peppermint essential oils.",symbol:"❋",image:"https://i.etsystatic.com/18990162/r/il/80cdb2/4844717868/il_fullxfull.4844717868_5g6a.jpg"},
-{id:24,name:"Organic Aloe Vera & Ginger Hair Mask with Hyaluronic Acid",ingredients:"Hyaluronic Acid, Organic Aloe Vera, Organic Ginger Extract, Niacinamide, Glycerin, Organic Pumpkin Seed Oil, Organic Rosemary Oil, Avocado Oil, Organic Hemp Seed Oil, Organic Neem Oil and Ginger Essential Oil.",type:"Hair Care",price:22,desc:"A plant-powered hair mask featuring hyaluronic acid, organic aloe vera, organic ginger extract, niacinamide, glycerin, pumpkin seed oil, rosemary oil, avocado oil, hemp seed oil, and neem oils.",symbol:"❋",image:"https://i.etsystatic.com/18990162/r/il/e11794/7539194738/il_fullxfull.7539194738_3tir.jpg"}
-];
-let cart=JSON.parse(localStorage.getItem("nutrileaf-cart-v2")||"[]");
+const products=[];
+let cart=[];
+try { cart=JSON.parse(localStorage.getItem("nutrileaf-cart-v2")||"[]"); } catch { cart=[]; }
+cart=normalizeCart(cart);
+localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));
+if(localStorage.getItem("nutrileaf-cart")){
+ localStorage.removeItem("nutrileaf-cart");
+ localStorage.setItem("nutrileaf-cart-refresh","1");
+}
 const API_BASE="https://nutrileaf-api.adam-d-may-20.workers.dev";
 const $=s=>document.querySelector(s);
 function money(n){return "$"+n.toFixed(2)}
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
 async function loadCatalog(){
  try {
   const response=await fetch(`${API_BASE}/products`);
   if(!response.ok) throw new Error("Catalog unavailable");
   const payload=await response.json();
-  products.splice(0,products.length,...(payload.products||[]).filter(p=>p.active===1).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:p.price/100})));
-  renderProducts();renderCart();
- } catch { toast("Catalog is unavailable. Checkout is disabled."); if(checkoutButton) checkoutButton.disabled=true; }
+  products.splice(0,products.length,...normalizeCatalog(payload.products).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:Number(p.price)/100,symbol:"✿"})));
+  cart=cart.filter(item=>products.some(product=>String(product.id)===item.product_id));
+  localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));
+  if($("#products"))renderProducts();renderCart();
+  if(checkoutButton)checkoutButton.disabled=cart.length===0;
+  if(checkoutSubmit)checkoutSubmit.disabled=false;
+  if(localStorage.getItem("nutrileaf-cart-refresh")){localStorage.removeItem("nutrileaf-cart-refresh");toast("Your cart was refreshed to use the current catalog.")}
+  return true;
+ } catch { toast("Catalog is unavailable. Checkout is disabled."); if(checkoutButton)checkoutButton.disabled=true;if(checkoutSubmit)checkoutSubmit.disabled=true;return false; }
 }
 
 function renderProducts(filter="All"){
  const list=filter==="All"?products:products.filter(p=>p.type===filter);
- $("#products").innerHTML=list.map(p=>`<article class="product" role="link" tabindex="0" onclick="openProduct(${p.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProduct(${p.id})}"><div class="product-photo">${p.image?`<img class="${p.id===13?"rotate-90":""}" src="${p.image}" alt="${p.name}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${p.type}</span><h3>${p.name}</h3><p>${p.desc}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" onclick="event.stopPropagation();addToCart(${p.id})">Add to cart</button></div></div></article>`).join("");
+ $("#products").innerHTML=list.map(p=>`<article class="product" data-product-id="${escapeHtml(p.id)}"><div class="product-photo">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${escapeHtml(p.type)}</span><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.desc)}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" type="button" data-add-product="${escapeHtml(p.id)}">Add to cart</button></div></div></article>`).join("");
+ $("#products").querySelectorAll("[data-add-product]").forEach(button=>button.addEventListener("click",()=>addToCart(button.dataset.addProduct)));
 }
-function openProduct(id){window.location.href=`product.html?id=${id}`}
-function addToCart(id,quantity=1){const p=products.find(x=>x.id===id);if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});save();toast(`${quantity} × ${p.name} added to cart`)}
-function save(){localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));renderCart()}
+function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});save();toast(`${quantity} × ${p.name} added to cart`)}
+function save(){cart=normalizeCart(cart);localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));renderCart();if(checkoutButton)checkoutButton.disabled=products.length===0||cart.length===0}
 function renderCart(){
  const cartCount=$("#cartCount"),cartItems=$("#cartItems"),cartTotal=$("#cartTotal");
  if(!cartCount||!cartItems||!cartTotal)return;
  cartCount.textContent=cart.reduce((s,x)=>s+x.quantity,0);
- cartItems.innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><strong>${x.name}</strong><div>${x.quantity} × ${money((products.find(p=>String(p.id)===x.product_id)||{}).price||0)}</div></div><button class="remove" onclick="removeItem("${x.product_id}")">Remove</button></div>`).join(""):"<p>Your cart is empty.</p>";
+ cartItems.innerHTML=cart.length?cart.map(x=>{const product=products.find(p=>String(p.id)===x.product_id);return `<div class="cart-item"><div><strong>${escapeHtml(product?.name||"Unavailable product")}</strong><div>${x.quantity} × ${money(product?.price||0)}</div></div><button class="remove" type="button" data-remove-product="${escapeHtml(x.product_id)}">Remove</button></div>`}).join(""):"<p>Your cart is empty.</p>";
+ cartItems.querySelectorAll("[data-remove-product]").forEach(button=>button.addEventListener("click",()=>removeItem(button.dataset.removeProduct)));
  cartTotal.textContent=money(cart.reduce((s,x)=>s+(((products.find(p=>String(p.id)===x.product_id)||{}).price||0)*x.quantity),0));
 }
 function removeItem(id){cart=cart.filter(x=>x.product_id!==String(id));save()}
@@ -67,10 +65,95 @@ if(cartQuery.get("openCart")==="1" && cartDrawer){
 }
 if(closeCart&&cartDrawer)closeCart.onclick=()=>{cartDrawer.classList.remove("open");cartDrawer.setAttribute("aria-hidden","true")};
 if(cartDrawer&&closeCart)cartDrawer.addEventListener("click",e=>{if(e.target.id==="cartDrawer")closeCart.click()});
-if(checkoutButton)checkoutButton.onclick=()=>{if(!cart.length){toast("Your cart is empty");return}alert("Demo checkout. Next step: connect a payment processor such as Stripe or PayPal.")};
+const checkoutDialog=$("#checkoutDialog"),closeCheckout=$("#closeCheckout"),checkoutForm=$("#checkoutForm"),checkoutSubmit=$("#checkoutSubmit"),checkoutErrors=$("#checkoutErrors"),checkoutStatus=$("#checkoutStatus");
+let checkoutReturnFocus=null;
+function setCheckoutOpen(open){
+ if(!checkoutDialog)return;
+ if(open)checkoutReturnFocus=document.activeElement;
+ checkoutDialog.classList.toggle("open",open);
+ checkoutDialog.setAttribute("aria-hidden",String(!open));
+ for(const child of document.body.children)if(child!==checkoutDialog)child.inert=open;
+ if(open)checkoutForm?.elements.first_name?.focus();
+ else checkoutReturnFocus?.focus?.();
+}
+function formCustomer(form){
+ const data=new FormData(form);
+ return {
+  email:data.get("email"),first_name:data.get("first_name"),last_name:data.get("last_name"),phone:data.get("phone"),
+  shipping_address:{name:data.get("name"),address_line1:data.get("address_line1"),address_line2:data.get("address_line2"),city:data.get("city"),state:data.get("state"),postal_code:data.get("postal_code"),country:data.get("country")}
+ };
+}
+function showCheckoutErrors(errors){
+ if(!checkoutErrors)return;
+ checkoutErrors.innerHTML=Object.values(errors).map(message=>`<p>${escapeHtml(message)}</p>`).join("");
+}
+function restoreCheckoutDraft(){
+ if(!checkoutForm)return;
+ try { const draft=JSON.parse(localStorage.getItem("nutrileaf-checkout-draft")||"{}"); for(const [name,value] of Object.entries(draft))if(checkoutForm.elements[name]&&typeof value==="string")checkoutForm.elements[name].value=value; } catch {}
+}
+function saveCheckoutDraft(){
+ if(!checkoutForm)return;
+ const draft=Object.fromEntries(new FormData(checkoutForm).entries());
+ localStorage.setItem("nutrileaf-checkout-draft",JSON.stringify(draft));
+}
+if(checkoutButton)checkoutButton.onclick=()=>{
+ if(!cart.length){toast("Your cart is empty");return}
+ if(checkoutForm?.hidden){checkoutForm.hidden=false;checkoutForm.reset();checkoutStatus.textContent="";showCheckoutErrors({})}
+ setCheckoutOpen(true);
+};
+if(closeCheckout)closeCheckout.onclick=()=>setCheckoutOpen(false);
+if(checkoutDialog)checkoutDialog.addEventListener("click",event=>{if(event.target===checkoutDialog)setCheckoutOpen(false)});
+if(checkoutForm){
+ restoreCheckoutDraft();
+ checkoutForm.addEventListener("input",saveCheckoutDraft);
+ checkoutForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const request=createCheckoutRequest({cart,customer:formCustomer(checkoutForm)});
+  const errors=validateCheckoutRequest(request);
+  showCheckoutErrors(errors);
+  if(Object.keys(errors).length)return;
+  const fingerprint=checkoutFingerprint(request);
+  let storedAttempt=null;
+  try { storedAttempt=JSON.parse(localStorage.getItem("nutrileaf-checkout-attempt")||"null"); } catch {}
+  const key=checkoutKeyFor(fingerprint,storedAttempt);
+  localStorage.setItem("nutrileaf-checkout-attempt",JSON.stringify({fingerprint,key}));
+  checkoutSubmit.disabled=true;
+  checkoutSubmit.textContent="Creating pending order…";
+  checkoutStatus.textContent="Submitting your TEST pending order.";
+  const result=await submitCheckout({apiBase:API_BASE,body:request,idempotencyKey:key});
+  checkoutSubmit.disabled=false;
+  checkoutSubmit.textContent="Create pending order";
+  const message=result.payload?.error?.message||result.payload?.message;
+  if(result.action==="confirm"){
+   const order=result.payload?.order||{};
+   checkoutForm.hidden=true;
+   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>Payment and fulfillment have not started.</p></div>`;
+   cart=[];save();
+   localStorage.removeItem("nutrileaf-checkout-attempt");
+   localStorage.removeItem("nutrileaf-checkout-draft");
+  }else if(result.action==="inline-error"){
+   showCheckoutErrors({request:message||"Check the highlighted order details and try again."});
+   checkoutStatus.textContent="The pending order was not created.";
+  }else if(result.action==="refresh-catalog"){
+   checkoutStatus.textContent="A cart item is no longer available. Returning to the refreshed cart.";
+   setCheckoutOpen(false);
+   await loadCatalog();
+   if(cartDrawer){cartDrawer.classList.add("open");cartDrawer.setAttribute("aria-hidden","false")}
+  }else if(result.action==="restart-attempt"){
+   localStorage.removeItem("nutrileaf-checkout-attempt");
+   checkoutStatus.textContent="This checkout attempt conflicts with an earlier request. Review the form and submit again to start a new attempt.";
+  }else{
+   checkoutStatus.textContent="The TEST service is temporarily unavailable. Retry to safely reuse this checkout attempt.";
+  }
+ });
+}
 const newsletterForm=$("#newsletterForm");
 if(newsletterForm)newsletterForm.onsubmit=e=>{e.preventDefault();toast("Thanks for joining Nutrileaf!");e.target.reset()};
-if($("#products"))loadCatalog();
+window.nutrileafProducts=products;
+window.nutrileafAddToCart=addToCart;
+window.nutrileafMoney=money;
+window.nutrileafEscapeHtml=escapeHtml;
+window.nutrileafCatalogReady=($("#products")||$("#productDetail"))?loadCatalog():Promise.resolve();
 if($("#cartCount")&&$("#cartItems")&&$("#cartTotal"))renderCart();
 
 
