@@ -58,3 +58,4 @@ test("maps checkout results without a payment transition", () => {
   assert.equal(checkoutResultAction(409), "restart-attempt");
   assert.equal(checkoutResultAction(500), "retry");
 });
+
