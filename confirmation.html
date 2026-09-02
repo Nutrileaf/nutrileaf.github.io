@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Order confirmation | NutriLeaf</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="confirmation-page">
+  <main class="confirmation-card">
+    <a class="confirmation-home" href="index.html">← Continue shopping</a>
+    <h1>Checking your order</h1>
+    <p>Your payment page return does not confirm payment. Enter the email used at checkout to see the authoritative order status.</p>
+    <form id="orderStatusForm" novalidate>
+      <label for="orderStatusEmail">Checkout email</label>
+      <input id="orderStatusEmail" name="email" type="email" autocomplete="email" required>
+      <button class="button" type="submit">Check order status</button>
+    </form>
+    <div id="orderStatusResult" role="status" aria-live="polite"></div>
+  </main>
+  <script type="module" src="confirmation.js"></script>
+</body>
+</html>

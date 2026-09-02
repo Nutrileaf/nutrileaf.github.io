@@ -33,6 +33,17 @@ test("storefront exposes an accessible pending-order checkout form", () => {
   assert.match(source, /child\.inert\s*=\s*open/);
 });
 
+test("confirmation UI never treats return URL parameters as payment authority", () => {
+  const html = readFileSync(new URL("../confirmation.html", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../confirmation.js", import.meta.url), "utf8");
+  assert.match(html, /id="orderStatusForm"/);
+  assert.match(html, /name="email"[^>]*required/);
+  assert.match(html, /script type="module" src="confirmation\.js"/);
+  assert.match(source, /getOrderStatus/);
+  assert.doesNotMatch(source, /payment=success|session_id|payment_status/);
+  assert.doesNotMatch(source, /sk_(test|live)_|paypal.*secret/i);
+});
+
 test("product detail resolves the authoritative catalog product ID", () => {
   const html = readFileSync(new URL("../product.html", import.meta.url), "utf8");
   assert.match(html, /script type="module" src="script\.js"/);
