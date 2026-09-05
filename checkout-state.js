@@ -75,5 +75,6 @@ export function checkoutResultAction(status) {
   if (status === 400) return "inline-error";
   if (status === 404) return "refresh-catalog";
   if (status === 409) return "restart-attempt";
+  if (status === 503) return "tax-outage";
   return "retry";
 }
