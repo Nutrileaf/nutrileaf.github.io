@@ -1,0 +1,28 @@
+name: P22 Storefront Verification
+
+on:
+  push:
+    branches: [p22-ga4-analytics-20260906]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: node --check script.js
+      - run: node --check checkout-state.js
+      - run: node --check checkout-submit.js
+      - run: node --check payment-initiation.js
+      - run: node --check order-status.js
+      - run: node --check confirmation.js
+      - run: node --check analytics.js
+      - run: node --check ga4-bootstrap.js
