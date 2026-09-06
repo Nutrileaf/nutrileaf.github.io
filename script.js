@@ -128,7 +128,7 @@ if(checkoutForm){
   if(result.action==="confirm"){
    const order=result.payload?.order||{};
    checkoutForm.hidden=true;
-   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>TEST only. Select a payment method to continue to its hosted TEST/Sandbox page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe TEST</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal Sandbox</button></div></div>`;
+   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Subtotal: ${escapeHtml(order.currency||"USD")} ${money(Number(order.subtotal||0)/100)}</p><p>Sales tax: ${escapeHtml(order.currency||"USD")} ${money(Number(order.tax||0)/100)}</p><p>Shipping: ${escapeHtml(order.currency||"USD")} ${money(Number(order.shipping||0)/100)}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>TEST only. Select a payment method to continue to its hosted TEST/Sandbox page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe TEST</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal Sandbox</button></div></div>`;
    checkoutStatus.querySelectorAll("[data-payment-provider]").forEach(button=>button.addEventListener("click",async()=>{
     const provider=button.dataset.paymentProvider;
     const storageKey=`nutrileaf-payment-operation:${order.id}:${provider}`;
@@ -143,6 +143,8 @@ if(checkoutForm){
     checkoutStatus.insertAdjacentHTML("beforeend",`<p class="checkout-errors">${payment.action==="conflict"?"This order already has a payment attempt. Please use its existing payment page.":"The TEST payment service is temporarily unavailable. Retry safely."}</p>`);
    }));
    localStorage.removeItem("nutrileaf-checkout-attempt");
+  }else if(result.action==="tax-outage"){
+   checkoutStatus.textContent=message||"Tax calculation is temporarily unavailable. Please try again later.";
   }else if(result.action==="inline-error"){
    showCheckoutErrors({request:message||"Check the highlighted order details and try again."});
    checkoutStatus.textContent="The pending order was not created.";
