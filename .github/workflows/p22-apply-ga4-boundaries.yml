@@ -65,8 +65,8 @@ jobs:
 
           order_marker = '   const order=result.payload?.order||{};\n'
           begin_block = '''   const order=result.payload?.order||{};
-             const analyticsItems=cart.map(x=>{const product=products.find(p=>String(p.id)===x.product_id);return product?analyticsItem(product,x.quantity):null}).filter(Boolean);
-             trackBeginCheckout({currency:String(order.currency||"USD"),value:Number(order.total||0)/100,items:analyticsItems});
+             const items=cart.map(x=>{const product=products.find(p=>String(p.id)===x.product_id);return product?analyticsItem(product,x.quantity):null}).filter(Boolean);
+             trackBeginCheckout({currency:String(order.currency||"USD"),value:Number(order.total||0)/100,items});
           '''
           if order_marker not in text: raise SystemExit('checkout confirm marker missing')
           text = text.replace(order_marker, begin_block, 1)
