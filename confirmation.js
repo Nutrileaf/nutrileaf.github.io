@@ -1,4 +1,5 @@
 import { getOrderStatus } from "./order-status.js";
+import { trackPurchase } from "./analytics.js";
 
 const API_BASE = "https://nutrileaf-api.adam-d-may-20.workers.dev";
 const ORDER_ID = new URLSearchParams(location.search).get("order_id") || "";
@@ -27,6 +28,7 @@ if (!UUID.test(ORDER_ID)) {
     if (status.action === "status") {
       const order = status.payload.order;
       render(`${order.number}: ${order.message}`, "success");
+      if (order.analytics) trackPurchase(order.analytics);
     } else if (status.action === "not-found") {
       render("We could not find a matching order. Check the checkout email and try again.", "error");
     } else if (status.action === "invalid") {
