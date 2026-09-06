@@ -1,6 +1,7 @@
 import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, checkoutKeyFor, validateCheckoutRequest } from "./checkout-state.js";
 import { submitCheckout } from "./checkout-submit.js";
 import { submitPaymentInitiation } from "./payment-initiation.js";
+import { trackAddToCart, trackBeginCheckout } from "./analytics.js";
 
 const products=[];
 let cart=[];
@@ -36,7 +37,8 @@ function renderProducts(filter="All"){
  $("#products").innerHTML=list.map(p=>`<article class="product" data-product-id="${escapeHtml(p.id)}"><div class="product-photo">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${escapeHtml(p.type)}</span><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.desc)}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" type="button" data-add-product="${escapeHtml(p.id)}">Add to cart</button></div></div></article>`).join("");
  $("#products").querySelectorAll("[data-add-product]").forEach(button=>button.addEventListener("click",()=>addToCart(button.dataset.addProduct)));
 }
-function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});save();toast(`${quantity} × ${p.name} added to cart`)}
+function analyticsItem(p,quantity=1){return {item_id:String(p.sku||p.id),item_name:String(p.name||""),price:Number(p.price),quantity}}
+function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`)}
 function save(){cart=normalizeCart(cart);localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));renderCart();if(checkoutButton)checkoutButton.disabled=products.length===0||cart.length===0}
 function renderCart(){
  const cartCount=$("#cartCount"),cartItems=$("#cartItems"),cartTotal=$("#cartTotal");
@@ -127,6 +129,8 @@ if(checkoutForm){
   const message=result.payload?.error?.message||result.payload?.message;
   if(result.action==="confirm"){
    const order=result.payload?.order||{};
+   const items=cart.map(x=>{const product=products.find(p=>String(p.id)===x.product_id);return product?analyticsItem(product,x.quantity):null}).filter(Boolean);
+   trackBeginCheckout({currency:String(order.currency||"USD"),value:Number(order.total||0)/100,items});
    checkoutForm.hidden=true;
    checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Subtotal: ${escapeHtml(order.currency||"USD")} ${money(Number(order.subtotal||0)/100)}</p><p>Sales tax: ${escapeHtml(order.currency||"USD")} ${money(Number(order.tax||0)/100)}</p><p>Shipping: ${escapeHtml(order.currency||"USD")} ${money(Number(order.shipping||0)/100)}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>TEST only. Select a payment method to continue to its hosted TEST/Sandbox page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe TEST</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal Sandbox</button></div></div>`;
    checkoutStatus.querySelectorAll("[data-payment-provider]").forEach(button=>button.addEventListener("click",async()=>{
