@@ -76,8 +76,12 @@ jobs:
             if(before.measurement!==measurementId) throw new Error(`Measurement ID mismatch: ${before.measurement}`);
             const viewLayer=before.dataLayer.find(x=>x[0]==='event'&&x[1]==='view_item');
             if(!viewLayer) throw new Error('Published dataLayer did not contain view_item');
+            const addAccepted=page.waitForResponse(res=>{
+              try { const r=parseRequest(res.request()); return r?.tid===measurementId&&r?.en==='add_to_cart'&&res.status()>=200&&res.status()<300; }
+              catch { return false; }
+            },{timeout:15000});
             await page.click('#detailAdd');
-            await page.waitForTimeout(5000);
+            await addAccepted;
             const after=await page.evaluate(()=>({dataLayer:(window.dataLayer||[]).map(x=>Array.from(x)),toast:document.querySelector('#productToastMessage')?.textContent||''}));
             const addLayer=after.dataLayer.find(x=>x[0]==='event'&&x[1]==='add_to_cart');
             if(!addLayer) throw new Error('Published dataLayer did not contain add_to_cart');
