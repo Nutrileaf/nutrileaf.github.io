@@ -116,10 +116,9 @@ test("product detail uses the same purchasability guard and cannot show a succes
   assert.match(html, /nutrileafIsProductPurchasable\(product\)/);
   assert.match(html, /Sold out/);
   const click = html.indexOf('document.querySelector("#detailAdd").onclick');
-  const add = html.indexOf("window.nutrileafAddToCart(product.id,amount)", click);
+  const guard = html.indexOf("if(!window.nutrileafAddToCart(product.id,amount))return;", click);
   const success = html.indexOf("added to cart", click);
   assert.ok(click >= 0);
-  assert.ok(add > click);
-  assert.ok(success > add);
-  assert.match(html.slice(add, success), /if\s*\(!/);
+  assert.ok(guard > click);
+  assert.ok(success > guard);
 });
