@@ -70,10 +70,11 @@ export function checkoutKeyFor(fingerprint, stored) {
   return `checkout-${crypto.randomUUID()}`;
 }
 
-export function checkoutResultAction(status) {
+export function checkoutResultAction(status, payload = null) {
   if (status === 201) return "confirm";
   if (status === 400) return "inline-error";
   if (status === 404) return "refresh-catalog";
+  if (status === 409 && payload?.error?.code === "PRODUCT_UNAVAILABLE") return "product-unavailable";
   if (status === 409) return "restart-attempt";
   if (status === 503) return "tax-outage";
   return "retry";

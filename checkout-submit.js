@@ -12,7 +12,7 @@ export async function submitCheckout({ apiBase, body, idempotencyKey, fetchImpl 
     });
     let payload = null;
     try { payload = await response.json(); } catch {}
-    return { action: checkoutResultAction(response.status), status: response.status, payload };
+    return { action: checkoutResultAction(response.status, payload), status: response.status, payload };
   } catch {
     return { action: "retry", status: 0, payload: null };
   }

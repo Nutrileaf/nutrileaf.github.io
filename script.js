@@ -2,6 +2,7 @@ import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerp
 import { submitCheckout } from "./checkout-submit.js";
 import { submitPaymentInitiation } from "./payment-initiation.js";
 import { trackAddToCart, trackBeginCheckout } from "./analytics.js";
+import { normalizeProductAvailability, isProductPurchasable, resolveProductImage, reconcileUnavailableCartItems } from "./p23-storefront-compat.js";
 
 const products=[];
 let cart=[];
@@ -21,7 +22,7 @@ async function loadCatalog(){
   const response=await fetch(`${API_BASE}/products`);
   if(!response.ok) throw new Error("Catalog unavailable");
   const payload=await response.json();
-  products.splice(0,products.length,...normalizeCatalog(payload.products).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:Number(p.price)/100,symbol:"✿"})));
+  products.splice(0,products.length,...normalizeCatalog(payload.products).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:Number(p.price)/100,symbol:"✿",availability:normalizeProductAvailability(p),image:resolveProductImage(p,API_BASE)})));
   cart=cart.filter(item=>products.some(product=>String(product.id)===item.product_id));
   localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));
   if($("#products"))renderProducts();renderCart();
@@ -34,11 +35,11 @@ async function loadCatalog(){
 
 function renderProducts(filter="All"){
  const list=filter==="All"?products:products.filter(p=>p.type===filter);
- $("#products").innerHTML=list.map(p=>`<article class="product" data-product-id="${escapeHtml(p.id)}"><div class="product-photo">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${escapeHtml(p.type)}</span><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.desc)}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" type="button" data-add-product="${escapeHtml(p.id)}">Add to cart</button></div></div></article>`).join("");
+ $("#products").innerHTML=list.map(p=>{const purchasable=isProductPurchasable(p);const availability=normalizeProductAvailability(p);const addLabel=purchasable?"Add to cart":availability==="SOLD_OUT"?"Sold out":"Unavailable";return `<article class="product" data-product-id="${escapeHtml(p.id)}"><div class="product-photo">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${escapeHtml(p.type)}</span><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.desc)}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" type="button" data-add-product="${escapeHtml(p.id)}" ${purchasable?"":'disabled aria-disabled="true"'}>${addLabel}</button></div></div></article>`}).join("");
  $("#products").querySelectorAll("[data-add-product]").forEach(button=>button.addEventListener("click",()=>addToCart(button.dataset.addProduct)));
 }
 function analyticsItem(p,quantity=1){return {item_id:String(p.sku||p.id),item_name:String(p.name||""),price:Number(p.price),quantity}}
-function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`)}
+function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p||!isProductPurchasable(p))return false;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`);return true}
 function save(){cart=normalizeCart(cart);localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));renderCart();if(checkoutButton)checkoutButton.disabled=products.length===0||cart.length===0}
 function renderCart(){
  const cartCount=$("#cartCount"),cartItems=$("#cartItems"),cartTotal=$("#cartTotal");
@@ -152,6 +153,14 @@ if(checkoutForm){
   }else if(result.action==="inline-error"){
    showCheckoutErrors({request:message||"Check the highlighted order details and try again."});
    checkoutStatus.textContent="The pending order was not created.";
+  }else if(result.action==="product-unavailable"){
+   cart=reconcileUnavailableCartItems(cart,result.payload?.error?.product_ids);
+   localStorage.removeItem("nutrileaf-checkout-attempt");
+   save();
+   checkoutStatus.textContent="One or more cart items are no longer available. Your cart was updated.";
+   setCheckoutOpen(false);
+   await loadCatalog();
+   if(cartDrawer){cartDrawer.classList.add("open");cartDrawer.setAttribute("aria-hidden","false")}
   }else if(result.action==="refresh-catalog"){
    checkoutStatus.textContent="A cart item is no longer available. Returning to the refreshed cart.";
    setCheckoutOpen(false);
@@ -169,6 +178,7 @@ const newsletterForm=$("#newsletterForm");
 if(newsletterForm)newsletterForm.onsubmit=e=>{e.preventDefault();toast("Thanks for joining Nutrileaf!");e.target.reset()};
 window.nutrileafProducts=products;
 window.nutrileafAddToCart=addToCart;
+window.nutrileafIsProductPurchasable=isProductPurchasable;
 window.nutrileafMoney=money;
 window.nutrileafEscapeHtml=escapeHtml;
 window.nutrileafCatalogReady=($("#products")||$("#productDetail"))?loadCatalog():Promise.resolve();
