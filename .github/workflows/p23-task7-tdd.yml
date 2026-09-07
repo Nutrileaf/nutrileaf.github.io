@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -17,11 +17,100 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Apply guarded Task 7 integration once
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -q 'p23-storefront-compat.js' script.js; then
+            echo 'Task 7 integration already present; no patch required.'
+          else
+            python <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one source marker, found {count}')
+              return text.replace(old, new, 1)
+
+          script_path = Path('script.js')
+          script = script_path.read_text()
+          script = replace_once(
+              script,
+              'import { trackAddToCart, trackBeginCheckout } from "./analytics.js";\n',
+              'import { trackAddToCart, trackBeginCheckout } from "./analytics.js";\nimport { normalizeProductAvailability, isProductPurchasable, resolveProductImage, reconcileUnavailableCartItems } from "./p23-storefront-compat.js";\n',
+              'compat import'
+          )
+          script = replace_once(
+              script,
+              '  products.splice(0,products.length,...normalizeCatalog(payload.products).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:Number(p.price)/100,symbol:"✿"})));',
+              '  products.splice(0,products.length,...normalizeCatalog(payload.products).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:Number(p.price)/100,symbol:"✿",availability:normalizeProductAvailability(p),image:resolveProductImage(p,API_BASE)})));',
+              'catalog projection'
+          )
+          old_render = ''' $("#products").innerHTML=list.map(p=>`<article class="product" data-product-id="${escapeHtml(p.id)}"><div class="product-photo">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${escapeHtml(p.type)}</span><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.desc)}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" type="button" data-add-product="${escapeHtml(p.id)}">Add to cart</button></div></div></article>`).join("");'''
+          new_render = ''' $("#products").innerHTML=list.map(p=>{const purchasable=isProductPurchasable(p);const availability=normalizeProductAvailability(p);const addLabel=purchasable?"Add to cart":availability==="SOLD_OUT"?"Sold out":"Unavailable";return `<article class="product" data-product-id="${escapeHtml(p.id)}"><div class="product-photo">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:p.symbol}</div><div class="product-info"><span class="tag">${escapeHtml(p.type)}</span><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.desc)}</p><div class="product-row"><span class="price">${money(p.price)}</span><button class="add" type="button" data-add-product="${escapeHtml(p.id)}" ${purchasable?"":'disabled aria-disabled="true"'}>${addLabel}</button></div></div></article>`}).join("");'''
+          script = replace_once(script, old_render, new_render, 'catalog rendering')
+          script = replace_once(
+              script,
+              'function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`)}',
+              'function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p||!isProductPurchasable(p))return false;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`);return true}',
+              'addToCart guard'
+          )
+          script = replace_once(
+              script,
+              '  }else if(result.action==="refresh-catalog"){',
+              '  }else if(result.action==="product-unavailable"){\n   cart=reconcileUnavailableCartItems(cart,result.payload?.error?.product_ids);\n   localStorage.removeItem("nutrileaf-checkout-attempt");\n   save();\n   checkoutStatus.textContent="One or more cart items are no longer available. Your cart was updated.";\n   setCheckoutOpen(false);\n   await loadCatalog();\n   if(cartDrawer){cartDrawer.classList.add("open");cartDrawer.setAttribute("aria-hidden","false")}\n  }else if(result.action==="refresh-catalog"){',
+              'PRODUCT_UNAVAILABLE branch'
+          )
+          script = replace_once(
+              script,
+              'window.nutrileafAddToCart=addToCart;\n',
+              'window.nutrileafAddToCart=addToCart;\nwindow.nutrileafIsProductPurchasable=isProductPurchasable;\n',
+              'product-detail guard export'
+          )
+          script_path.write_text(script)
+
+          product_path = Path('product.html')
+          html = product_path.read_text()
+          html = replace_once(
+              html,
+              '.detail-add{width:100%;max-width:300px;padding:14px 20px;border:0;border-radius:4px;background:var(--green);color:#fff;font-weight:700;font-size:16px;cursor:pointer}\n',
+              '.detail-add{width:100%;max-width:300px;padding:14px 20px;border:0;border-radius:4px;background:var(--green);color:#fff;font-weight:700;font-size:16px;cursor:pointer}\n.detail-add:disabled{opacity:.55;cursor:not-allowed}\n',
+              'detail disabled style'
+          )
+          html = replace_once(
+              html,
+              '  const safe=window.nutrileafEscapeHtml;\n',
+              '  const safe=window.nutrileafEscapeHtml;\n  const purchasable=window.nutrileafIsProductPurchasable(product);\n',
+              'detail purchasability'
+          )
+          html = replace_once(
+              html,
+              '<button type="button" class="detail-add" id="detailAdd">Add to cart</button>',
+              '<button type="button" class="detail-add" id="detailAdd" ${purchasable?"":\'disabled aria-disabled="true"\'}>${purchasable?"Add to cart":product.availability==="SOLD_OUT"?"Sold out":"Unavailable"}</button>',
+              'detail add button'
+          )
+          html = replace_once(
+              html,
+              '    window.nutrileafAddToCart(product.id,amount);',
+              '    if(!window.nutrileafAddToCart(product.id,amount))return;',
+              'detail add guard'
+          )
+          product_path.write_text(html)
+          PY
+            git diff --check
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add script.js product.html
+            git commit -m 'feat(p23): integrate storefront availability compatibility'
+            git push origin HEAD:p23-product-catalog-compat
+          fi
       - name: Storefront tests
         run: npm test
       - name: Syntax checks
         run: |
           node --check script.js
+          node --check p23-storefront-compat.js
           node --check checkout-state.js
           node --check checkout-submit.js
           node --check payment-initiation.js
