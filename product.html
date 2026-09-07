@@ -23,6 +23,7 @@
 .quantity-control button{width:44px;height:44px;border:0;background:#f5f2e9;color:var(--green);font-size:20px;cursor:pointer}
 .quantity-control span{min-width:44px;text-align:center;font-size:16px}
 .detail-add{width:100%;max-width:300px;padding:14px 20px;border:0;border-radius:4px;background:var(--green);color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+.detail-add:disabled{opacity:.55;cursor:not-allowed}
 .detail-note{margin-top:18px;font-size:13px;color:#718077}
 .product-quantity-label{display:block;margin:0 0 8px;color:var(--green);font-size:13px;font-weight:700;letter-spacing:.04em}
 .quantity-control input{width:58px;height:44px;border:0;background:#fff;color:var(--green);text-align:center;font-size:16px;font-weight:600;outline:none}
@@ -57,8 +58,9 @@ if(!product){
   trackViewItem({currency:"USD",item:{item_id:String(product.sku||product.id),item_name:String(product.name||""),price:Number(product.price),quantity:1}});
   let qty=1;
   const safe=window.nutrileafEscapeHtml;
+  const purchasable=window.nutrileafIsProductPurchasable(product);
   const image=product.image?`<img src="${safe(product.image)}" alt="${safe(product.name)} label">`:`<div class="product-detail-symbol">${safe(product.symbol)}</div>`;
-  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${safe(product.type)}</span><h1>${safe(product.name)}</h1><p class="product-detail-description">${safe(product.desc)}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${safe(product.ingredients)}`:""}</p><div class="product-detail-price">${window.nutrileafMoney(product.price)}</div><label class="product-quantity-label" for="qtyValue">Quantity</label><div class="quantity-control" aria-label="Quantity"><button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button><input id="qtyValue" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Product quantity"><button type="button" id="qtyPlus" aria-label="Increase quantity">+</button></div><button type="button" class="detail-add" id="detailAdd">Add to cart</button><div class="detail-note">Choose a quantity using − / + or type the number directly.</div></div>`;
+  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${safe(product.type)}</span><h1>${safe(product.name)}</h1><p class="product-detail-description">${safe(product.desc)}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${safe(product.ingredients)}`:""}</p><div class="product-detail-price">${window.nutrileafMoney(product.price)}</div><label class="product-quantity-label" for="qtyValue">Quantity</label><div class="quantity-control" aria-label="Quantity"><button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button><input id="qtyValue" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Product quantity"><button type="button" id="qtyPlus" aria-label="Increase quantity">+</button></div><button type="button" class="detail-add" id="detailAdd" ${purchasable?"":'disabled aria-disabled="true"'}>${purchasable?"Add to cart":product.availability==="SOLD_OUT"?"Sold out":"Unavailable"}</button><div class="detail-note">Choose a quantity using − / + or type the number directly.</div></div>`;
   const qtyValue=document.querySelector("#qtyValue");
   const normalizeQty=()=>{
     const value=Math.max(1,parseInt(qtyValue.value,10)||1);
@@ -79,7 +81,7 @@ if(!product){
   let productToastTimer;
   document.querySelector("#detailAdd").onclick=()=>{
     const amount=normalizeQty();
-    window.nutrileafAddToCart(product.id,amount);
+    if(!window.nutrileafAddToCart(product.id,amount))return;
     document.querySelector("#productToastMessage").textContent=`✓ ${amount} × ${product.name} added to cart`;
     productToast.classList.add("show");
     clearTimeout(productToastTimer);
