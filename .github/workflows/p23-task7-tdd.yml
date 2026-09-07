@@ -1,0 +1,31 @@
+name: P23 Task 7 TDD
+
+on:
+  push:
+    branches:
+      - p23-product-catalog-compat
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Storefront tests
+        run: npm test
+      - name: Syntax checks
+        run: |
+          node --check script.js
+          node --check checkout-state.js
+          node --check checkout-submit.js
+          node --check payment-initiation.js
+          node --check order-status.js
+          node --check confirmation.js
+          node --check analytics.js
+          node --check ga4-bootstrap.js
