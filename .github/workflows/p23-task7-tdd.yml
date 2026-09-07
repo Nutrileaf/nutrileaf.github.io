@@ -42,7 +42,7 @@ jobs:
           grep -Fq 'from "./p23-storefront-compat.js"' script.js
           grep -Fq 'availability' script.js
           grep -Fq 'product-unavailable' script.js
-          git diff --check HEAD^
+          git diff --check
       - name: Browser secret and admin boundary scan
         shell: bash
         run: |
