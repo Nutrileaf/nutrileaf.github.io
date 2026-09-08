@@ -1,0 +1,24 @@
+name: P24 Dashboard UI Verify
+
+on:
+  push:
+    branches:
+      - p24-product-dashboard-foundation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Dashboard syntax
+        run: |
+          if [ -f dashboard/model.js ]; then node --check dashboard/model.js; fi
+          if [ -f dashboard/app.js ]; then node --check dashboard/app.js; fi
