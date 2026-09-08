@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>NutriLeaf Product Dashboard — TEST</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="login-card" id="loginView" aria-labelledby="loginTitle">
+      <div class="brand-mark" aria-hidden="true">NL</div>
+      <p class="eyebrow">TEST PRODUCT DASHBOARD</p>
+      <h1 id="loginTitle">NutriLeaf Products</h1>
+      <p class="muted">Sign in to manage TEST products. This dashboard does not process payments or shipping.</p>
+      <form id="loginForm" class="stack">
+        <label for="password">Dashboard password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="512">
+        <button class="pill primary" type="submit">Sign in</button>
+      </form>
+      <p class="message error" id="loginMessage" role="alert" hidden></p>
+    </section>
+
+    <section id="dashboardView" hidden>
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">TEST PRODUCT DASHBOARD</p>
+          <h1>Products</h1>
+          <p class="muted">Add products, update details, adjust stock, manage photos, and control store visibility.</p>
+        </div>
+        <button class="pill quiet" id="logoutButton" type="button">Log out</button>
+      </header>
+
+      <section class="toolbar" aria-label="Product actions">
+        <button class="pill primary" id="addProductButton" type="button">Add Product</button>
+        <label class="search-field">
+          <span>Find a product</span>
+          <input id="searchInput" type="search" placeholder="Name or SKU" autocomplete="off">
+        </label>
+        <button class="pill quiet" id="refreshButton" type="button">Refresh</button>
+      </section>
+
+      <p class="message" id="pageMessage" role="status" aria-live="polite" hidden></p>
+      <div class="counts" id="counts" aria-live="polite"></div>
+      <section class="product-grid" id="productList" aria-label="Products"></section>
+      <button class="pill quiet load-more" id="loadMoreButton" type="button" hidden>Load more</button>
+
+      <section class="editor" id="editor" aria-labelledby="editorTitle" hidden>
+        <div class="editor-head">
+          <div>
+            <p class="eyebrow" id="editorMode">PRODUCT</p>
+            <h2 id="editorTitle">Edit Product</h2>
+            <p class="sku-line" id="skuLine"></p>
+          </div>
+          <button class="pill quiet" id="closeEditorButton" type="button">Close</button>
+        </div>
+
+        <div class="warning-card" id="readinessWarning" role="status" hidden>
+          <strong>Needs attention</strong>
+          <p id="readinessText"></p>
+          <button class="pill quiet small" id="clearWarningButton" type="button">Clear warning</button>
+        </div>
+
+        <form id="productForm" class="editor-form">
+          <label>Product name
+            <input id="productName" name="product_name" required maxlength="120">
+          </label>
+          <label>Product Type
+            <select id="productType" name="product_type" required></select>
+          </label>
+          <label class="full-width">Description
+            <textarea id="productDescription" name="description" maxlength="2000" rows="4"></textarea>
+          </label>
+          <label>Price
+            <span class="money-input"><span>$</span><input id="productPrice" name="price" inputmode="decimal" placeholder="0.00"></span>
+          </label>
+          <div class="visibility-box">
+            <span>Store visibility</span>
+            <p id="visibilityState" class="muted">Hidden</p>
+            <div class="action-row">
+              <button class="pill success" id="showProductButton" type="button">Show in store</button>
+              <button class="pill warning" id="hideProductButton" type="button">Hide from store</button>
+            </div>
+          </div>
+          <div class="full-width action-row form-actions">
+            <button class="pill primary" type="submit">Save product</button>
+            <button class="pill quiet" id="cancelProductButton" type="button">Cancel</button>
+          </div>
+        </form>
+
+        <section class="operator-section" id="stockSection" hidden aria-labelledby="stockTitle">
+          <div>
+            <h3 id="stockTitle">Stock</h3>
+            <p>Exact stock: <strong id="stockValue">0</strong></p>
+          </div>
+          <label class="compact-field">Quantity
+            <input id="stockQuantity" type="number" min="1" max="1000000" step="1" value="1" inputmode="numeric">
+          </label>
+          <div class="action-row">
+            <button class="pill success" id="addStockButton" type="button">Add stock</button>
+            <button class="pill warning" id="removeStockButton" type="button">Remove stock</button>
+          </div>
+        </section>
+
+        <section class="operator-section photo-section" id="photoSection" hidden aria-labelledby="photoTitle">
+          <div>
+            <h3 id="photoTitle">Product photo</h3>
+            <p class="muted">JPEG, PNG, or WebP. Maximum 2 MB.</p>
+          </div>
+          <div class="photo-preview-wrap"><img id="photoPreview" alt="Current product photo" hidden></div>
+          <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp">
+          <div class="action-row">
+            <button class="pill success" id="addPhotoButton" type="button">Add photo</button>
+            <button class="pill quiet" id="replacePhotoButton" type="button">Replace photo</button>
+            <button class="pill warning" id="removePhotoButton" type="button">Remove photo</button>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <template id="emptyProductsTemplate">
+    <div class="empty-state">
+      <h2>No products found</h2>
+      <p>Try another search or add a product.</p>
+    </div>
+  </template>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
