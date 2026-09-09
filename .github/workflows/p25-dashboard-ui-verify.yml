@@ -1,0 +1,30 @@
+name: P25 Dashboard UX Verify
+
+on:
+  push:
+    branches:
+      - p25-product-operations-ux
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Full storefront suite
+        run: npm test
+      - name: P25 focused contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          if compgen -G 'tests/p25-*.test.mjs' > /dev/null; then node --test tests/p25-*.test.mjs; fi
+      - name: Dashboard syntax
+        run: |
+          node --check dashboard/model.js
+          node --check dashboard/app.js
