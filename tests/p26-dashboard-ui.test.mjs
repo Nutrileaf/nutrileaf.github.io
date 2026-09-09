@@ -1,0 +1,5 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { attentionMessage, buildOrdersQuery, orderStatusLabel, paymentStatusLabel } from "../dashboard/orders-model.js";
+test("P26 Orders uses bounded server-side query controls",()=>{assert.equal(buildOrdersQuery({search:" NL-26 ",order_status:"PAID",payment_status:"PAID",attention:"needs_attention",limit:25}).toString(),"search=NL-26&order_status=PAID&payment_status=PAID&attention=needs_attention&limit=25");assert.throws(()=>buildOrdersQuery({limit:51}));});
+test("P26 uses plain authoritative operator labels",()=>{assert.equal(paymentStatusLabel("PAID"),"Payment received.");assert.equal(paymentStatusLabel("PENDING"),"Payment has not completed yet.");assert.equal(orderStatusLabel("PROCESSING"),"Preparing order");assert.equal(attentionMessage("PAYMENT_UNCONFIRMED"),"This order needs attention because payment is not confirmed.");});
