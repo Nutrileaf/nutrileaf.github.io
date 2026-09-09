@@ -160,3 +160,14 @@ test("photo selection, status announcements, touch targets, and responsive layou
   assert.match(css, /@media \(max-width:\s*640px\)/);
   assert.match(css, /overflow-wrap|word-break/);
 });
+
+test("operator actions cannot silently discard unsaved product details", () => {
+  const app = dashboardSource("app.js");
+  assert.match(app, /function ensureNoUnsavedDetails\(/);
+  assert.match(app, /changeVisibility[\s\S]*ensureNoUnsavedDetails/);
+  assert.match(app, /adjustStock[\s\S]*ensureNoUnsavedDetails/);
+  assert.match(app, /uploadPhoto[\s\S]*ensureNoUnsavedDetails/);
+  assert.match(app, /removePhoto[\s\S]*ensureNoUnsavedDetails/);
+  assert.doesNotMatch(app, /if \(!file\) \{[\s\S]{0,180}populateEditor\(state\.selected\)/);
+  assert.match(app, /function openEditor\([\s\S]*if \(!els\.editor\.hidden && editorIsDirty\(\)/);
+});
