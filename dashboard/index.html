@@ -36,9 +36,31 @@
         <button class="pill primary" id="addProductButton" type="button">Add Product</button>
         <label class="search-field">
           <span>Find a product</span>
-          <input id="searchInput" type="search" placeholder="Name or SKU" autocomplete="off">
+          <input id="searchInput" type="search" placeholder="Name or SKU" autocomplete="off" maxlength="100">
         </label>
         <button class="pill quiet" id="refreshButton" type="button">Refresh</button>
+        <div class="filter-panel" aria-label="Product filters">
+          <label>Product Type
+            <select id="productTypeFilter">
+              <option value="">All Product Types</option>
+            </select>
+          </label>
+          <label>Visibility
+            <select id="visibilityFilter">
+              <option value="">All visibility</option>
+              <option value="visible">Visible</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+          <label>Stock
+            <select id="stockStatusFilter">
+              <option value="">All stock</option>
+              <option value="in_stock">In Stock</option>
+              <option value="sold_out">Sold Out</option>
+            </select>
+          </label>
+          <button class="pill quiet" id="clearFiltersButton" type="button">Clear filters</button>
+        </div>
       </section>
 
       <p class="message" id="pageMessage" role="status" aria-live="polite" hidden></p>
@@ -52,9 +74,12 @@
             <p class="eyebrow" id="editorMode">PRODUCT</p>
             <h2 id="editorTitle">Edit Product</h2>
             <p class="sku-line" id="skuLine"></p>
+            <p class="unsaved-indicator" id="unsavedIndicator" aria-live="polite" hidden>Unsaved changes</p>
           </div>
           <button class="pill quiet" id="closeEditorButton" type="button">Close</button>
         </div>
+
+        <p class="message editor-status" id="editorStatus" role="status" aria-live="polite" hidden></p>
 
         <div class="warning-card" id="readinessWarning" role="status" hidden>
           <strong>Needs attention</strong>
@@ -83,6 +108,21 @@
               <button class="pill warning" id="hideProductButton" type="button">Hide from store</button>
             </div>
           </div>
+
+          <section class="guided-section full-width" id="newProductExtras" aria-labelledby="newProductExtrasTitle">
+            <div>
+              <h3 id="newProductExtrasTitle">Finish setting up the product</h3>
+              <p class="muted">New products are Hidden when created. Starting stock and a photo are optional and are added only after the product is safely created.</p>
+            </div>
+            <label>Starting stock
+              <input id="startingStock" type="number" min="0" max="1000000" step="1" value="0" inputmode="numeric">
+            </label>
+            <label>Starting photo
+              <input id="startingPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+            </label>
+            <div class="starting-preview-wrap"><img id="startingPhotoPreview" alt="Selected starting product photo preview" hidden></div>
+          </section>
+
           <div class="full-width action-row form-actions">
             <button class="pill primary" type="submit">Save product</button>
             <button class="pill quiet" id="cancelProductButton" type="button">Cancel</button>
@@ -109,7 +149,10 @@
             <p class="muted">JPEG, PNG, or WebP. Maximum 2 MB.</p>
           </div>
           <div class="photo-preview-wrap"><img id="photoPreview" alt="Current product photo" hidden></div>
-          <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp">
+          <div>
+            <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp">
+            <p class="muted photo-selection-status" id="photoSelectionStatus" aria-live="polite"></p>
+          </div>
           <div class="action-row">
             <button class="pill success" id="addPhotoButton" type="button">Add photo</button>
             <button class="pill quiet" id="replacePhotoButton" type="button">Replace photo</button>
@@ -123,7 +166,7 @@
   <template id="emptyProductsTemplate">
     <div class="empty-state">
       <h2>No products found</h2>
-      <p>Try another search or add a product.</p>
+      <p>Try another search or clear the filters.</p>
     </div>
   </template>
 
