@@ -1,0 +1,16 @@
+name: P26 Orders Dashboard UI Verify
+on:
+  push:
+    branches: [p26-orders-dashboard-foundation]
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm test
+      - run: node --test tests/p26-*.test.mjs
+      - run: node --check dashboard/orders-model.js && node --check dashboard/orders.js
