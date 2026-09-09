@@ -29,9 +29,10 @@
           <h1>Products</h1>
           <p class="muted">Add products, update details, adjust stock, manage photos, and control store visibility.</p>
         </div>
-        <button class="pill quiet" id="logoutButton" type="button">Log out</button>
+        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
       </header>
 
+      <div id="productsWorkspace">
       <section class="toolbar" aria-label="Product actions">
         <button class="pill primary" id="addProductButton" type="button">Add Product</button>
         <label class="search-field">
@@ -160,6 +161,16 @@
           </div>
         </section>
       </section>
+      </div>
+      <section id="ordersPanel" hidden aria-labelledby="ordersTitle">
+        <header class="dashboard-header"><div><p class="eyebrow">TEST ORDER DASHBOARD</p><h2 id="ordersTitle">Orders</h2><p class="muted">Review existing order, payment, customer, and shipping information. No order changes are available here.</p></div><button class="pill quiet" id="ordersRefresh" type="button">Refresh</button></header>
+        <section class="toolbar" aria-label="Orders filters">
+          <label class="search-field"><span>Find an order</span><input id="ordersSearch" type="search" placeholder="Order number, customer, or email" maxlength="100"></label>
+          <div class="filter-panel"><label>Order status<select id="orderStatusFilter"><option value="">All orders</option><option value="PAYMENT_PENDING">Awaiting payment</option><option value="PAID">Paid</option><option value="PROCESSING">Preparing</option><option value="REFUNDED">Refunded</option><option value="CANCELLED">Cancelled</option><option value="FAILED">Failed</option></select></label><label>Payment<select id="paymentStatusFilter"><option value="">All payments</option><option value="PAID">Payment received</option><option value="PENDING">Pending</option><option value="FAILED">Failed</option></select></label><label>Attention<select id="attentionFilter"><option value="">All</option><option value="needs_attention">Needs attention</option><option value="none">No attention needed</option></select></label></div>
+        </section>
+        <p class="message" id="ordersMessage" role="status" aria-live="polite" hidden></p><section class="product-grid" id="ordersList" aria-label="Orders"></section><button class="pill quiet load-more" id="ordersMore" type="button" hidden>Load more</button>
+        <section class="editor" id="orderDetail" aria-labelledby="orderDetailTitle" tabindex="-1" hidden><div class="editor-head"><div><p class="eyebrow">ORDER DETAILS</p><h2 id="orderDetailTitle"></h2></div><button class="pill quiet" id="ordersBack" type="button">Back to Orders</button></div><div id="orderDetailBody"></div></section>
+      </section>
     </section>
   </main>
 
@@ -171,5 +182,6 @@
   </template>
 
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./orders.js"></script>
 </body>
 </html>
