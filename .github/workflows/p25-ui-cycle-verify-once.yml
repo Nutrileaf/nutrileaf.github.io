@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   implement:
-    if: github.event.head_commit.message == 'ci(p25): apply unsaved detail guards'
+    if: "github.event.head_commit.message == 'ci(p25): apply unsaved detail guards'"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
