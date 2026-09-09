@@ -448,9 +448,14 @@ function confirmDiscardChanges() {
   return confirm("Cancel and discard unsaved product changes?");
 }
 
+function ensureNoUnsavedDetails(action) {
+  if (!editorIsDirty()) return true;
+  showEditorMessage(`Save or Cancel your product detail changes before ${action}.`, "error");
+  return false;
+}
+
 function openEditor(product = null) {
-  const switchingProducts = !els.editor.hidden && (state.selected?.id ?? null) !== (product?.id ?? null);
-  if (switchingProducts && !confirmDiscardChanges()) return;
+  if (!els.editor.hidden && editorIsDirty() && !confirmDiscardChanges()) return;
   state.selected = product;
   populateEditor(product);
   els.editor.hidden = false;
@@ -562,6 +567,7 @@ async function saveProduct(event) {
 
 async function changeVisibility(visible) {
   if (!state.selected) return;
+  if (!ensureNoUnsavedDetails("changing store visibility")) return;
   const key = `visibility:${state.selected.id}:${visible}`;
   try {
     const result = await mutateJson(key, `/api/products/${encodeURIComponent(state.selected.id)}`, "PATCH", { visible_in_store: visible });
@@ -590,6 +596,7 @@ function stockQuantity() {
 
 async function adjustStock(operation) {
   if (!state.selected) return;
+  if (!ensureNoUnsavedDetails("adjusting stock")) return;
   try {
     const quantity = stockQuantity();
     const currentStock = Number(state.selected.available_stock ?? 0);
@@ -620,7 +627,15 @@ function previewEditPhoto() {
     const file = els.photoInput.files?.[0];
     if (!file) {
       revokeObjectUrl("editPhotoPreviewUrl");
-      populateEditor(state.selected);
+      els.photoSelectionStatus.textContent = "";
+      if (state.selected?.photo) {
+        els.photoPreview.src = `/media/products/${encodeURIComponent(state.selected.id)}`;
+        els.photoPreview.alt = `${state.selected.name} current product photo`;
+        els.photoPreview.hidden = false;
+      } else {
+        els.photoPreview.removeAttribute("src");
+        els.photoPreview.hidden = true;
+      }
       return;
     }
     showFilePreview(file, els.photoPreview, "editPhotoPreviewUrl");
@@ -660,6 +675,7 @@ function previewStartingPhoto() {
 
 async function uploadPhoto() {
   if (!state.selected) return;
+  if (!ensureNoUnsavedDetails("saving a product photo")) return;
   try {
     const file = selectedPhotoFile();
     showEditorMessage("Saving product photo…");
@@ -681,6 +697,7 @@ async function uploadPhoto() {
 
 async function removePhoto() {
   if (!state.selected || !state.selected.photo) return;
+  if (!ensureNoUnsavedDetails("removing the product photo")) return;
   if (!confirm("Remove this product photo?")) return;
   const key = `remove-photo:${state.selected.id}`;
   try {
