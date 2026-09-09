@@ -6,6 +6,7 @@ const PRODUCT_TYPE_SET = new Set(P24_PRODUCT_TYPES);
 const VISIBILITY_FILTERS = new Set(["hidden", "visible"]);
 const STOCK_STATUS_FILTERS = new Set(["in_stock", "sold_out"]);
 const MAX_PRICE_CENTS = 99_999_999;
+const MAX_STOCK_QUANTITY = 1_000_000;
 
 export function priceCentsFromInput(value) {
   const text = String(value ?? "").trim();
@@ -21,6 +22,17 @@ export function priceInputFromCents(value) {
   if (value == null) return "";
   if (!Number.isSafeInteger(value) || value < 1 || value > MAX_PRICE_CENTS) return "";
   return `${Math.floor(value / 100)}.${String(value % 100).padStart(2, "0")}`;
+}
+
+export function startingStockFromInput(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return 0;
+  if (!/^\d+$/.test(text)) throw new Error("Enter starting stock as a whole number.");
+  const quantity = Number(text);
+  if (!Number.isSafeInteger(quantity) || quantity < 0 || quantity > MAX_STOCK_QUANTITY) {
+    throw new Error("Enter starting stock between 0 and 1,000,000.");
+  }
+  return quantity;
 }
 
 export function productDraft(input) {
