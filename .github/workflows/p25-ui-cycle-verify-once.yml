@@ -1,0 +1,21 @@
+name: P25 UI Cycle Verify Once
+
+on:
+  push:
+    branches:
+      - p25-product-operations-ux
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/p25-dashboard-ux.test.mjs
+      - run: npm test
+      - run: node --check dashboard/model.js
