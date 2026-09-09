@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   P24_PRODUCT_TYPES,
@@ -7,8 +8,13 @@ import {
   editorFingerprint,
   hasUnsavedProductChanges,
   readinessGuidance,
-  requiresStockRemovalConfirmation
+  requiresStockRemovalConfirmation,
+  startingStockFromInput
 } from "../dashboard/model.js";
+
+function dashboardSource(name) {
+  return readFileSync(new URL(`../dashboard/${name}`, import.meta.url), "utf8");
+}
 
 test("product-list query serializes only bounded search and filters", () => {
   const query = buildProductListQuery({
@@ -77,6 +83,13 @@ test("stock removal confirmation is reserved for removing all currently availabl
   assert.equal(requiresStockRemovalConfirmation(0, 0), false);
 });
 
+test("starting stock is optional, whole-number, and bounded", () => {
+  assert.equal(startingStockFromInput(""), 0);
+  assert.equal(startingStockFromInput("0"), 0);
+  assert.equal(startingStockFromInput("12"), 12);
+  for (const bad of ["-1", "1.5", "1000001", "abc"]) assert.throws(() => startingStockFromInput(bad), /stock/i);
+});
+
 test("readiness guidance remains server-driven and plain-language", () => {
   assert.equal(readinessGuidance({ can_show_in_store: true }), null);
   assert.equal(
@@ -95,4 +108,55 @@ test("readiness guidance remains server-driven and plain-language", () => {
     readinessGuidance({ can_show_in_store: false, visibility_message: "A server-defined readiness rule is blocking visibility." }),
     "A server-defined readiness rule is blocking visibility."
   );
+});
+
+test("dashboard exposes simple server-side Product Type, visibility, and stock filters", () => {
+  const html = dashboardSource("index.html");
+  const app = dashboardSource("app.js");
+  for (const id of ["productTypeFilter", "visibilityFilter", "stockStatusFilter", "clearFiltersButton"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+    assert.match(app, new RegExp(id));
+  }
+  assert.match(app, /buildProductListQuery/);
+  assert.match(app, /product_type/);
+  assert.match(app, /stock_status/);
+});
+
+test("Add Product is a guided hidden-first workflow with optional starting stock and photo", () => {
+  const html = dashboardSource("index.html");
+  const app = dashboardSource("app.js");
+  assert.match(html, /id="startingStock"/);
+  assert.match(html, /id="startingPhoto"/);
+  assert.match(html, /Hidden when created/);
+  assert.match(html, /SKU will be created automatically/);
+  assert.match(app, /startingStockFromInput/);
+  assert.match(app, /startingStock/);
+  assert.match(app, /startingPhoto/);
+  assert.match(app, /visible_in_store\s*=\s*false/);
+  assert.doesNotMatch(app, /draft\.sku|draft\.id|draft\.stripe_tax_code/);
+});
+
+test("editing protects unsaved details and destructive full-stock removal", () => {
+  const html = dashboardSource("index.html");
+  const app = dashboardSource("app.js");
+  assert.match(html, /id="unsavedIndicator"/);
+  assert.match(app, /hasUnsavedProductChanges/);
+  assert.match(app, /beforeunload/);
+  assert.match(app, /requiresStockRemovalConfirmation/);
+  assert.match(app, /confirm\(/);
+  assert.match(app, /Cancel/);
+});
+
+test("photo selection, status announcements, touch targets, and responsive layouts are explicit", () => {
+  const html = dashboardSource("index.html");
+  const app = dashboardSource("app.js");
+  const css = dashboardSource("styles.css");
+  assert.match(html, /id="photoSelectionStatus"[^>]*aria-live="polite"/);
+  assert.match(html, /id="editorStatus"[^>]*aria-live="polite"/);
+  assert.match(app, /URL\.createObjectURL/);
+  assert.match(app, /URL\.revokeObjectURL/);
+  assert.match(css, /min-height:\s*44px/);
+  assert.match(css, /@media \(max-width:\s*900px\)/);
+  assert.match(css, /@media \(max-width:\s*640px\)/);
+  assert.match(css, /overflow-wrap|word-break/);
 });
