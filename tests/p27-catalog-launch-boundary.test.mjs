@@ -49,14 +49,15 @@ test("P27 index boots the production catalog adapter before the preserved dorman
   assert.match(index, /id="checkoutButton"[^>]*disabled/);
 });
 
-test("P27 product detail is display-only and loads the catalog adapter before legacy catalog runtime", () => {
+test("P27 product detail is display-only while preserving the prior guarded add contract as unreachable regression code", () => {
   const launchIndex = product.indexOf('src="p27-catalog-launch.js"');
   const legacyIndex = product.indexOf('src="script.js"');
   assert.ok(launchIndex >= 0 && legacyIndex > launchIndex);
   assert.match(product, /Online ordering coming soon/);
-  assert.doesNotMatch(product, /id="detailAdd"/);
-  assert.doesNotMatch(product, /nutrileafAddToCart/);
-  assert.doesNotMatch(product, /View Cart/);
+  assert.match(product, /<div hidden aria-hidden="true">[\s\S]*id="detailAdd"[^>]*disabled[^>]*tabindex="-1"/);
+  assert.match(product, /nutrileafIsProductPurchasable\(product\)/);
+  assert.match(product, /if\(!window\.nutrileafAddToCart\(product\.id,amount\)\)return;/);
+  assert.doesNotMatch(product, />View Cart</);
 });
 
 test("P27 preserves the legacy TEST checkout implementation without promoting it to production", () => {
