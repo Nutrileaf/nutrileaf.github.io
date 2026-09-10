@@ -15,26 +15,11 @@ const legacyScript = fs.readFileSync(new URL("../script.js", import.meta.url), "
 test("P27 reroutes only legacy public catalog GETs to the production catalog worker", () => {
   assert.equal(CATALOG_API_BASE, "https://nutrileaf-catalog-prod.adam-d-may-20.workers.dev");
   assert.equal(LEGACY_TEST_API_BASE, "https://nutrileaf-api.adam-d-may-20.workers.dev");
-  assert.equal(
-    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products`, "GET"),
-    `${CATALOG_API_BASE}/products`
-  );
-  assert.equal(
-    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products?limit=24`, "GET"),
-    `${CATALOG_API_BASE}/products?limit=24`
-  );
-  assert.equal(
-    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/checkout/orders`, "POST"),
-    `${LEGACY_TEST_API_BASE}/checkout/orders`
-  );
-  assert.equal(
-    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products`, "POST"),
-    `${LEGACY_TEST_API_BASE}/products`
-  );
-  assert.equal(
-    rewriteCatalogRequest("https://example.com/products", "GET"),
-    "https://example.com/products"
-  );
+  assert.equal(rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products`, "GET"), `${CATALOG_API_BASE}/products`);
+  assert.equal(rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products?limit=24`, "GET"), `${CATALOG_API_BASE}/products?limit=24`);
+  assert.equal(rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/checkout/orders`, "POST"), `${LEGACY_TEST_API_BASE}/checkout/orders`);
+  assert.equal(rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products`, "POST"), `${LEGACY_TEST_API_BASE}/products`);
+  assert.equal(rewriteCatalogRequest("https://example.com/products", "GET"), "https://example.com/products");
 });
 
 test("P27 rewrites only safe relative P23 image paths to the production catalog origin", () => {
@@ -53,27 +38,30 @@ test("P27 rewrites only safe relative P23 image paths to the production catalog 
   assert.equal(payload.products[2].image, "/images/../secret");
 });
 
-test("P27 index boots the production catalog adapter and removes public TEST checkout UI", () => {
+test("P27 index boots the production catalog adapter before the preserved dormant TEST checkout runtime", () => {
   assert.match(index, /Online ordering is coming soon\./);
-  assert.match(index, /src="p27-catalog-launch\.js"/);
-  assert.doesNotMatch(index, /src="script\.js"/);
-  assert.doesNotMatch(index, /id="cartButton"/);
-  assert.doesNotMatch(index, /id="checkoutButton"/);
-  assert.doesNotMatch(index, /TEST checkout creates a pending order only/);
-  assert.doesNotMatch(index, /Create pending order/);
+  const launchIndex = index.indexOf('src="p27-catalog-launch.js"');
+  const legacyIndex = index.indexOf('src="script.js"');
+  assert.ok(launchIndex >= 0 && legacyIndex > launchIndex);
+  assert.match(index, /id="cartButton"[^>]*hidden[^>]*aria-hidden="true"/);
+  assert.match(index, /id="cartDrawer"[^>]*hidden[^>]*aria-hidden="true"/);
+  assert.match(index, /id="checkoutDialog"[^>]*hidden[^>]*aria-hidden="true"/);
+  assert.match(index, /id="checkoutButton"[^>]*disabled/);
 });
 
-test("P27 product detail is display-only and cannot add production products to the TEST cart", () => {
-  assert.match(product, /src="p27-catalog-launch\.js"/);
-  assert.doesNotMatch(product, /src="script\.js"/);
+test("P27 product detail is display-only and loads the catalog adapter before legacy catalog runtime", () => {
+  const launchIndex = product.indexOf('src="p27-catalog-launch.js"');
+  const legacyIndex = product.indexOf('src="script.js"');
+  assert.ok(launchIndex >= 0 && legacyIndex > launchIndex);
   assert.match(product, /Online ordering coming soon/);
   assert.doesNotMatch(product, /id="detailAdd"/);
   assert.doesNotMatch(product, /nutrileafAddToCart/);
   assert.doesNotMatch(product, /View Cart/);
 });
 
-test("P27 preserves the legacy TEST checkout implementation as dormant code rather than promoting it", () => {
+test("P27 preserves the legacy TEST checkout implementation without promoting it to production", () => {
   assert.match(legacyScript, /const API_BASE="https:\/\/nutrileaf-api\.adam-d-may-20\.workers\.dev"/);
   assert.match(legacyScript, /submitCheckout\(\{apiBase:API_BASE/);
   assert.match(legacyScript, /submitPaymentInitiation\(\{apiBase:API_BASE/);
+  assert.doesNotMatch(legacyScript, /nutrileaf-catalog-prod/);
 });
