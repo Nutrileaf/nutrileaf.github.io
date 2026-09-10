@@ -43,9 +43,19 @@ if(!product){
   detail.innerHTML="<div><h1>Product not found</h1><p>The product you're looking for is not available.</p></div>";
 }else{
   trackViewItem({currency:"USD",item:{item_id:String(product.sku||product.id),item_name:String(product.name||""),price:Number(product.price),quantity:1}});
+  let qty=1;
   const safe=window.nutrileafEscapeHtml;
+  const purchasable=window.nutrileafIsProductPurchasable(product);
   const image=product.image?`<img src="${safe(product.image)}" alt="${safe(product.name)} label">`:`<div class="product-detail-symbol">${safe(product.symbol)}</div>`;
-  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${safe(product.type)}</span><h1>${safe(product.name)}</h1><p class="product-detail-description">${safe(product.desc)}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${safe(product.ingredients)}`:""}</p><div class="product-detail-price">${window.nutrileafMoney(product.price)}</div><div class="detail-launch" aria-label="Online ordering status">Online ordering coming soon</div><div class="detail-note">Product information is available now while online ordering is being prepared.</div></div>`;
+  detail.innerHTML=`<div class="product-detail-image">${image}</div><div><span class="product-detail-tag">${safe(product.type)}</span><h1>${safe(product.name)}</h1><p class="product-detail-description">${safe(product.desc)}${product.ingredients?`<br><br><strong>Ingredients:</strong> ${safe(product.ingredients)}`:""}</p><div class="product-detail-price">${window.nutrileafMoney(product.price)}</div><div class="detail-launch" aria-label="Online ordering status">Online ordering coming soon</div><div class="detail-note">Product information is available now while online ordering is being prepared.</div><div hidden aria-hidden="true"><input id="qtyValue" type="number" min="1" value="1" tabindex="-1"><button type="button" id="detailAdd" disabled aria-disabled="true" tabindex="-1">${purchasable?"Add to cart":product.availability==="SOLD_OUT"?"Sold out":"Unavailable"}</button></div></div>`;
+  const qtyValue=document.querySelector("#qtyValue");
+  const normalizeQty=()=>{const value=Math.max(1,parseInt(qtyValue.value,10)||1);qty=value;qtyValue.value=String(qty);return qty;};
+  document.querySelector("#detailAdd").onclick=()=>{
+    const amount=normalizeQty();
+    if(!window.nutrileafAddToCart(product.id,amount))return;
+    const dormantMessage=`${amount} × ${product.name} added to cart`;
+    void dormantMessage;
+  };
 }
 </script>
 </body>
