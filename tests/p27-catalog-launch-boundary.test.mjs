@@ -1,25 +1,79 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import {
+  CATALOG_API_BASE,
+  LEGACY_TEST_API_BASE,
+  absolutizeCatalogPayload,
+  rewriteCatalogRequest
+} from "../p27-catalog-launch.js";
 
-const script = fs.readFileSync(new URL("../script.js", import.meta.url), "utf8");
 const index = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const product = fs.readFileSync(new URL("../product.html", import.meta.url), "utf8");
+const legacyScript = fs.readFileSync(new URL("../script.js", import.meta.url), "utf8");
 
-test("P27 separates the production catalog endpoint from the retained TEST checkout endpoint", () => {
-  assert.match(script, /const CATALOG_API_BASE="https:\/\/nutrileaf-catalog-prod\.[^"]+\.workers\.dev";/);
-  assert.match(script, /const CHECKOUT_API_BASE="https:\/\/nutrileaf-api\.adam-d-may-20\.workers\.dev";/);
-  assert.equal(/const API_BASE=/.test(script), false);
-  assert.match(script, /fetch\(`\$\{CATALOG_API_BASE\}\/products`\)/);
-  assert.match(script, /resolveProductImage\(p,CATALOG_API_BASE\)/);
-  assert.match(script, /submitCheckout\(\{apiBase:CHECKOUT_API_BASE/);
-  assert.match(script, /submitPaymentInitiation\(\{apiBase:CHECKOUT_API_BASE/);
+test("P27 reroutes only legacy public catalog GETs to the production catalog worker", () => {
+  assert.equal(CATALOG_API_BASE, "https://nutrileaf-catalog-prod.adam-d-may-20.workers.dev");
+  assert.equal(LEGACY_TEST_API_BASE, "https://nutrileaf-api.adam-d-may-20.workers.dev");
+  assert.equal(
+    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products`, "GET"),
+    `${CATALOG_API_BASE}/products`
+  );
+  assert.equal(
+    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products?limit=24`, "GET"),
+    `${CATALOG_API_BASE}/products?limit=24`
+  );
+  assert.equal(
+    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/checkout/orders`, "POST"),
+    `${LEGACY_TEST_API_BASE}/checkout/orders`
+  );
+  assert.equal(
+    rewriteCatalogRequest(`${LEGACY_TEST_API_BASE}/products`, "POST"),
+    `${LEGACY_TEST_API_BASE}/products`
+  );
+  assert.equal(
+    rewriteCatalogRequest("https://example.com/products", "GET"),
+    "https://example.com/products"
+  );
 });
 
-test("P27 public production catalog is display-only and cannot feed TEST checkout", () => {
-  assert.match(script, /Online ordering coming soon/);
-  assert.doesNotMatch(script, /data-add-product=/);
-  assert.doesNotMatch(script, /addToCart\(button\.dataset\.addProduct\)/);
-  assert.match(index, /Online ordering is coming soon/);
+test("P27 rewrites only safe relative P23 image paths to the production catalog origin", () => {
+  const productId = "11111111-1111-4111-8111-111111111111";
+  const imageId = "22222222-2222-4222-8222-222222222222";
+  const safePath = `/images/products/${productId}/${imageId}.webp`;
+  const payload = absolutizeCatalogPayload({
+    products: [
+      { id: productId, image: safePath },
+      { id: "other", image: "https://cdn.example/image.webp" },
+      { id: "bad", image: "/images/../secret" }
+    ]
+  });
+  assert.equal(payload.products[0].image, `${CATALOG_API_BASE}${safePath}`);
+  assert.equal(payload.products[1].image, "https://cdn.example/image.webp");
+  assert.equal(payload.products[2].image, "/images/../secret");
+});
+
+test("P27 index boots the production catalog adapter and removes public TEST checkout UI", () => {
+  assert.match(index, /Online ordering is coming soon\./);
+  assert.match(index, /src="p27-catalog-launch\.js"/);
+  assert.doesNotMatch(index, /src="script\.js"/);
+  assert.doesNotMatch(index, /id="cartButton"/);
+  assert.doesNotMatch(index, /id="checkoutButton"/);
   assert.doesNotMatch(index, /TEST checkout creates a pending order only/);
   assert.doesNotMatch(index, /Create pending order/);
+});
+
+test("P27 product detail is display-only and cannot add production products to the TEST cart", () => {
+  assert.match(product, /src="p27-catalog-launch\.js"/);
+  assert.doesNotMatch(product, /src="script\.js"/);
+  assert.match(product, /Online ordering coming soon/);
+  assert.doesNotMatch(product, /id="detailAdd"/);
+  assert.doesNotMatch(product, /nutrileafAddToCart/);
+  assert.doesNotMatch(product, /View Cart/);
+});
+
+test("P27 preserves the legacy TEST checkout implementation as dormant code rather than promoting it", () => {
+  assert.match(legacyScript, /const API_BASE="https:\/\/nutrileaf-api\.adam-d-may-20\.workers\.dev"/);
+  assert.match(legacyScript, /submitCheckout\(\{apiBase:API_BASE/);
+  assert.match(legacyScript, /submitPaymentInitiation\(\{apiBase:API_BASE/);
 });
