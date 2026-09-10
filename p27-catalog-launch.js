@@ -1,7 +1,7 @@
 export const CATALOG_API_BASE = "https://nutrileaf-catalog-prod.adam-d-may-20.workers.dev";
 export const LEGACY_TEST_API_BASE = "https://nutrileaf-api.adam-d-may-20.workers.dev";
 
-const P23_IMAGE_PATH = /^\/images\/products\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{12}\.(?:jpg|png|webp)$/i;
+const P23_IMAGE_PATH = /^\/images\/products\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp)$/i;
 
 function requestUrl(input) {
   if (typeof input === "string") return input;
@@ -41,8 +41,7 @@ export async function catalogLaunchFetch(nativeFetch, input, init) {
   if (!contentType.includes("application/json")) return response;
   let payload;
   try { payload = await response.clone().json(); } catch { return response; }
-  const transformed = absolutizeCatalogPayload(payload);
-  return new Response(JSON.stringify(transformed), {
+  return new Response(JSON.stringify(absolutizeCatalogPayload(payload)), {
     status: response.status,
     statusText: response.statusText,
     headers: response.headers
@@ -71,12 +70,13 @@ export function installCatalogLaunch(win = window, doc = document) {
   }, true);
 
   disablePurchaseControls(doc);
-  const observer = new MutationObserver(() => disablePurchaseControls(doc));
-  observer.observe(doc.documentElement, { childList: true, subtree: true });
-  return observer;
+  const Observer = win.MutationObserver || globalThis.MutationObserver;
+  if (Observer) {
+    const observer = new Observer(() => disablePurchaseControls(doc));
+    observer.observe(doc.documentElement, { childList: true, subtree: true });
+    return observer;
+  }
+  return null;
 }
 
-if (typeof window !== "undefined" && typeof document !== "undefined") {
-  installCatalogLaunch(window, document);
-  await import("./script.js");
-}
+if (typeof window !== "undefined" && typeof document !== "undefined") installCatalogLaunch(window, document);
