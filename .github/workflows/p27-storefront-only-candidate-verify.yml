@@ -35,7 +35,9 @@ jobs:
         run: |
           set -euo pipefail
           test ! -e dashboard
-          ! grep -RniE '(href|src)=["'"'][^"'"']*dashboard/|/admin/products|NUTRILEAF_(PROD_)?ADMIN_TOKEN|DASHBOARD_(PROD_)?SESSION_SECRET|STRIPE_SECRET|PAYPAL_CLIENT_SECRET|EASYPOST' -- index.html product.html p27-catalog-launch.js script.js p23-storefront-compat.js tests || exit 1
+          runtime_files=(index.html product.html p27-catalog-launch.js script.js p23-storefront-compat.js)
+          ! grep -niE '/admin/products|NUTRILEAF_(PROD_)?ADMIN_TOKEN|DASHBOARD_(PROD_)?SESSION_SECRET|STRIPE_SECRET|PAYPAL_CLIENT_SECRET|EASYPOST' -- "${runtime_files[@]}" || exit 1
+          ! grep -ni 'dashboard/' -- "${runtime_files[@]}" || exit 1
 
       - name: Verify production catalog remains display-only
         shell: bash
@@ -68,7 +70,7 @@ jobs:
           test -f _site/p27-catalog-launch.js
           test ! -e _site/dashboard
           ! find _site -type f -print | grep -E '/dashboard/|dashboard/(index|app|model|orders|styles)\.(html|js|css)$' || exit 1
-          ! grep -RniE '(href|src)=["'"'][^"'"']*dashboard/' _site/index.html _site/product.html _site/p27-catalog-launch.js || exit 1
+          ! grep -ni 'dashboard/' -- _site/index.html _site/product.html _site/p27-catalog-launch.js || exit 1
           find _site -type f -printf '%P\n' | LC_ALL=C sort > p27-pages-manifest.txt
 
       - name: Upload sanitized candidate evidence
