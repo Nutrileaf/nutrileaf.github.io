@@ -1,0 +1,35 @@
+name: Post-Publication Storefront Polish Verify
+
+on:
+  push:
+    branches: [post-publication-storefront-polish-20260912]
+    paths:
+      - index.html
+      - product.html
+      - script.js
+      - styles.css
+      - p27-catalog-launch.js
+      - tests/**
+      - package.json
+      - .github/workflows/post-publication-storefront-polish-verify.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Full storefront tests
+        run: npm test
+      - name: Syntax checks
+        run: |
+          node --check script.js
+          node --check p27-catalog-launch.js
+          node --check p23-storefront-compat.js
+      - name: Dependency audit
+        run: npm audit --audit-level=high
