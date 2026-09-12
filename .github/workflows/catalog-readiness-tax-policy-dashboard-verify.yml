@@ -14,6 +14,7 @@ on:
 permissions:
   contents: read
 
+# Catalog readiness tax-policy dashboard verifier.
 jobs:
   focused:
     runs-on: ubuntu-latest
