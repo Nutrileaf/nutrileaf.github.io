@@ -1,0 +1,26 @@
+name: Catalog Readiness Tax Policy Dashboard Verify
+
+on:
+  push:
+    branches: [catalog-readiness-tax-policy-dashboard]
+    paths:
+      - dashboard/index.html
+      - dashboard/tax-policy-model.js
+      - dashboard/tax-policies.js
+      - dashboard/styles.css
+      - tests/catalog-readiness-tax-policy-dashboard.test.mjs
+      - .github/workflows/catalog-readiness-tax-policy-dashboard-verify.yml
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/catalog-readiness-tax-policy-dashboard.test.mjs
