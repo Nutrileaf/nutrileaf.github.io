@@ -29,7 +29,7 @@
           <h1>Products</h1>
           <p class="muted">Add products, update details, adjust stock, manage photos, and control store visibility.</p>
         </div>
-        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
+        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="taxPoliciesTab" type="button">Tax Review</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
       </header>
 
       <div id="productsWorkspace">
@@ -162,6 +162,14 @@
         </section>
       </section>
       </div>
+      <section id="taxPoliciesPanel" hidden aria-labelledby="taxPoliciesTitle">
+        <header class="dashboard-header">
+          <div><p class="eyebrow">PRODUCT TYPE TAX REVIEW</p><h2 id="taxPoliciesTitle">Product Type Tax Review</h2><p class="muted">Review the Stripe tax code assigned to each Product Type before products can be shown in the store.</p></div>
+          <button class="pill quiet" id="taxPoliciesRefresh" type="button">Refresh</button>
+        </header>
+        <p class="message" id="taxPoliciesMessage" role="status" aria-live="polite" hidden></p>
+        <section class="product-grid" id="taxPoliciesList" aria-label="Product Type tax policies"></section>
+      </section>
       <section id="ordersPanel" hidden aria-labelledby="ordersTitle">
         <header class="dashboard-header"><div><p class="eyebrow">TEST ORDER DASHBOARD</p><h2 id="ordersTitle">Orders</h2><p class="muted">Review existing order, payment, customer, and shipping information. No order changes are available here.</p></div><button class="pill quiet" id="ordersRefresh" type="button">Refresh</button></header>
         <section class="toolbar" aria-label="Orders filters">
@@ -183,5 +191,6 @@
 
   <script type="module" src="./app.js"></script>
   <script type="module" src="./orders.js"></script>
+  <script type="module" src="./tax-policies.js"></script>
 </body>
 </html>
