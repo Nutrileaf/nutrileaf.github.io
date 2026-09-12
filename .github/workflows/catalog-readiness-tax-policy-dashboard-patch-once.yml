@@ -1,0 +1,50 @@
+name: Catalog Readiness Tax Policy Dashboard Patch Once
+
+on:
+  push:
+    branches: [catalog-readiness-tax-policy-dashboard]
+    paths:
+      - .github/workflows/catalog-readiness-tax-policy-dashboard-patch-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add minimal tax review workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('dashboard/index.html')
+          s=p.read_text()
+          old='<button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button>'
+          new='<button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="taxPoliciesTab" type="button">Tax Review</button><button class="pill quiet" id="logoutButton" type="button">Log out</button>'
+          if old not in s: raise SystemExit('header anchor missing')
+          s=s.replace(old,new,1)
+          anchor='      <section id="ordersPanel" hidden aria-labelledby="ordersTitle">'
+          block='''      <section id="taxPoliciesPanel" hidden aria-labelledby="taxPoliciesTitle">\n        <header class="dashboard-header">\n          <div><p class="eyebrow">PRODUCT TYPE TAX REVIEW</p><h2 id="taxPoliciesTitle">Product Type Tax Review</h2><p class="muted">Review the Stripe tax code assigned to each Product Type before products can be shown in the store.</p></div>\n          <button class="pill quiet" id="taxPoliciesRefresh" type="button">Refresh</button>\n        </header>\n        <p class="message" id="taxPoliciesMessage" role="status" aria-live="polite" hidden></p>\n        <section class="product-grid" id="taxPoliciesList" aria-label="Product Type tax policies"></section>\n      </section>\n'''
+          if anchor not in s: raise SystemExit('orders anchor missing')
+          s=s.replace(anchor,block+anchor,1)
+          script='  <script type="module" src="./orders.js"></script>'
+          replace=script+'\n  <script type="module" src="./tax-policies.js"></script>'
+          if script not in s: raise SystemExit('script anchor missing')
+          s=s.replace(script,replace,1)
+          p.write_text(s)
+          PY
+          git diff --check
+      - name: Commit dashboard workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name Nutrileaf
+          git config user.email adam.d.may.20@gmail.com
+          git add dashboard/index.html
+          git commit -m "feat: add Product Type tax review workspace"
+          git push origin HEAD:catalog-readiness-tax-policy-dashboard
