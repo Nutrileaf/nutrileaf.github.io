@@ -32,19 +32,34 @@ test('launch placeholder copy is removed from the public home page', () => {
   ]) assert.equal(index.includes(phrase), false, `placeholder phrase remains: ${phrase}`);
 });
 
-test('each dynamically rendered product card exposes a product-detail link without enabling ordering', () => {
-  const script = read('script.js');
+test('post-publication decorator adds product-detail links while the catalog boundary still disables ordering', () => {
+  const index = read('index.html');
+  const polish = read('post-publication-polish.js');
   const launch = read('p27-catalog-launch.js');
-  assert.match(script, /product\.html\?id=\$\{encodeURIComponent\(String\(p\.id\)\)\}/);
-  assert.match(script, /class="product-details-link"/);
-  assert.match(script, /data-add-product="\$\{escapeHtml\(p\.id\)\}"/);
+  assert.match(index, /<script type="module" src="post-publication-polish\.js"><\/script>/);
+  assert.match(polish, /product\.html\?id=/);
+  assert.match(polish, /product-details-link/);
+  assert.match(polish, /MutationObserver/);
   assert.match(launch, /Online ordering coming soon/);
   assert.match(launch, /removeAttribute\(['"]data-add-product['"]\)/);
 });
 
 test('collection heading and detail links retain responsive storefront styling', () => {
-  const styles = read('styles.css');
+  const index = read('index.html');
+  const styles = read('post-publication-polish.css');
+  assert.match(index, /<link rel="stylesheet" href="post-publication-polish\.css">/);
   assert.match(styles, /\.collection-banner h1\s*\{/);
   assert.match(styles, /\.product-details-link\s*\{/);
   assert.match(styles, /\.product-details-link:focus-visible/);
+  assert.match(styles, /\.sr-only\s*\{/);
+});
+
+test('basic SEO metadata is canonical and product detail metadata follows the selected product', () => {
+  const index = read('index.html');
+  const detail = read('product.html');
+  assert.match(index, /<link rel="canonical" href="https:\/\/nutrileaf\.github\.io\/">/);
+  assert.match(detail, /<meta name="description"/);
+  assert.match(detail, /<link rel="canonical" id="productCanonical" href="https:\/\/nutrileaf\.github\.io\/product\.html">/);
+  assert.match(detail, /document\.title=`\$\{product\.name\} \| Nutrileaf`/);
+  assert.match(detail, /productCanonical\.href=/);
 });
