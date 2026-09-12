@@ -23,10 +23,7 @@
       <a href="#shop" data-filter="Tea">Artisan Teas</a>
       <a href="#shop" data-filter="Plant">Plants</a>
     </div>
-    <button class="cart-btn" id="cartButton" aria-label="Open cart">
-      <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 4h2l2.1 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 8H6.2M9 20a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm10 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <button class="cart-btn" id="cartButton" hidden aria-hidden="true" tabindex="-1">
       <span class="cart-label">Cart (<span id="cartCount">0</span>)</span>
     </button>
   </nav>
@@ -52,19 +49,13 @@
         <button type="button" data-value="Plant" role="option">Plants</button>
       </div>
     </div>
+    <p class="catalog-launch-note">Online ordering is coming soon.</p>
   </div>
 </div>
   <div class="products" id="products"></div>
 </section>
 
-
 <main id="home">
-
-
-
-
-
-
 <section class="reviews" id="reviews">
   <div class="reviews-backdrop" aria-hidden="true"></div>
   <div class="reviews-content">
@@ -126,16 +117,16 @@
 <section class="contact" id="contact"><p class="eyebrow">CONTACT</p><h2>Questions about an order?</h2><p>Nutrileaf's email, social links, pickup information and business hours.</p></section>
 </main>
 
-<div class="cart-drawer" id="cartDrawer" aria-hidden="true">
-  <div class="cart-panel"><div class="cart-head"><h2>Your cart</h2><button id="closeCart">×</button></div>
+<div class="cart-drawer" id="cartDrawer" hidden aria-hidden="true">
+  <div class="cart-panel"><div class="cart-head"><h2>Your cart</h2><button id="closeCart" tabindex="-1">×</button></div>
   <div id="cartItems"></div><div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>
-  <button class="button full" id="checkoutButton" disabled>Proceed to checkout</button>
-  <p class="tiny">TEST checkout creates a pending order only. Payment and fulfillment do not start.</p></div>
+  <button class="button full" id="checkoutButton" disabled tabindex="-1">Proceed to checkout</button>
+  <p class="tiny">TEST checkout is retained only as dormant regression code during catalog launch.</p></div>
 </div>
-<section class="checkout-dialog" id="checkoutDialog" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="checkoutTitle">
+<section class="checkout-dialog" id="checkoutDialog" hidden role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="checkoutTitle">
   <div class="checkout-panel">
-    <div class="cart-head"><h2 id="checkoutTitle">Delivery details</h2><button type="button" id="closeCheckout" aria-label="Close checkout">×</button></div>
-    <p class="checkout-notice">TEST only — this creates a pending order. No payment or shipment will be started.</p>
+    <div class="cart-head"><h2 id="checkoutTitle">Delivery details</h2><button type="button" id="closeCheckout" tabindex="-1" aria-label="Close checkout">×</button></div>
+    <p class="checkout-notice">TEST checkout is unavailable during public catalog launch.</p>
     <form id="checkoutForm" novalidate>
       <div class="checkout-fields two-column">
         <label>First name<input name="first_name" autocomplete="given-name" required></label>
@@ -153,13 +144,14 @@
       </div>
       <input name="country" type="hidden" value="US">
       <div class="checkout-errors" id="checkoutErrors" role="alert"></div>
-      <button class="button full" id="checkoutSubmit" type="submit">Create pending order</button>
+      <button class="button full" id="checkoutSubmit" type="submit" disabled tabindex="-1">Create pending order</button>
     </form>
     <div class="checkout-status" id="checkoutStatus" aria-live="polite"></div>
   </div>
 </section>
 <div class="toast" id="toast"></div>
 <footer><span>© 2026 <span class="inline-brand">Nutrileaf</span></span><span>Handmade • Botanical • Beauty</span></footer>
+<script type="module" src="p27-catalog-launch.js"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
