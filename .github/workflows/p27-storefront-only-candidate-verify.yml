@@ -1,0 +1,83 @@
+name: P27 Storefront-Only Candidate Verify
+
+on:
+  push:
+    branches:
+      - p27-storefront-only-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Focused storefront-only boundary
+        run: node --test tests/p27-storefront-only-integration.test.mjs
+
+      - name: Full storefront suite
+        run: npm test
+
+      - name: JavaScript syntax
+        run: |
+          node --check p27-catalog-launch.js
+          node --check script.js
+          node --check p23-storefront-compat.js
+
+      - name: Public-source boundary scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e dashboard
+          runtime_files=(index.html product.html p27-catalog-launch.js script.js p23-storefront-compat.js)
+          ! grep -niE '/admin/products|NUTRILEAF_(PROD_)?ADMIN_TOKEN|DASHBOARD_(PROD_)?SESSION_SECRET|STRIPE_SECRET|PAYPAL_CLIENT_SECRET|EASYPOST' -- "${runtime_files[@]}" || exit 1
+          ! grep -ni 'dashboard/' -- "${runtime_files[@]}" || exit 1
+
+      - name: Verify production catalog remains display-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const origin='https://nutrileaf-catalog-prod.adam-d-may-20.workers.dev';
+          const catalog=await fetch(`${origin}/products`,{headers:{Origin:'https://nutrileaf.github.io'},redirect:'manual'});
+          if(catalog.status!==200) throw new Error(`catalog status ${catalog.status}`);
+          const payload=await catalog.json();
+          if(!Array.isArray(payload.products)||payload.products.length!==0) throw new Error('hidden product leaked into public catalog');
+          const checkout=await fetch(`${origin}/checkout/orders`,{method:'GET',redirect:'manual'});
+          if(checkout.status!==404) throw new Error(`checkout route unexpectedly available: ${checkout.status}`);
+          fs.writeFileSync('p27-storefront-only-live-evidence.json',JSON.stringify({public_product_count:payload.products.length,checkout_orders_status:checkout.status},null,2)+'\n');
+          NODE
+
+      - name: Build GitHub Pages candidate
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: .
+          destination: ./_site
+
+      - name: Inspect GitHub Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f _site/index.html
+          test -f _site/product.html
+          test -f _site/p27-catalog-launch.js
+          test ! -e _site/dashboard
+          ! find _site -type f -print | grep -E '/dashboard/|dashboard/(index|app|model|orders|styles)\.(html|js|css)$' || exit 1
+          ! grep -ni 'dashboard/' -- _site/index.html _site/product.html _site/p27-catalog-launch.js || exit 1
+          find _site -type f -printf '%P\n' | LC_ALL=C sort > p27-pages-manifest.txt
+
+      - name: Upload sanitized candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p27-storefront-only-candidate-${{ github.run_id }}
+          path: |
+            p27-storefront-only-live-evidence.json
+            p27-pages-manifest.txt
+          retention-days: 14
