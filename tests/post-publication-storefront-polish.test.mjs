@@ -44,6 +44,13 @@ test('post-publication decorator adds product-detail links while the catalog bou
   assert.match(launch, /removeAttribute\(['"]data-add-product['"]\)/);
 });
 
+test('hidden commerce controls stay hidden despite legacy header cart styling', () => {
+  const index = read('index.html');
+  const styles = read('post-publication-polish.css');
+  assert.match(index, /id="cartButton" hidden aria-hidden="true"/);
+  assert.match(styles, /\.header-nav \.cart-btn\[hidden\]\s*\{[^}]*display\s*:\s*none\s*!important/s);
+});
+
 test('collection heading and detail links retain responsive storefront styling', () => {
   const index = read('index.html');
   const styles = read('post-publication-polish.css');
