@@ -10,6 +10,10 @@
   border:0!important;
 }
 
+.header-nav .cart-btn[hidden]{
+  display:none!important;
+}
+
 .collection-banner h1{
   margin:0;
   font:400 clamp(40px,5vw,56px) Georgia,serif;
