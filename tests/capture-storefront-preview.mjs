@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 
@@ -21,6 +22,12 @@ for (const [name, viewport] of Object.entries({
   await page.route("**/products", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ products }) }));
   await page.goto("http://127.0.0.1:8765/index.html", { waitUntil: "networkidle" });
   await page.locator(".product").first().waitFor();
+  const photoStyle = await page.locator(".product-photo").first().evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return { height: computed.height, padding: computed.padding };
+  });
+  assert.equal(photoStyle.height, "270px", `${name} product photos retain their established height`);
+  assert.equal(photoStyle.padding, "18px", `${name} product photos retain their established inset`);
   await page.screenshot({ path: `${output}/storefront-${name}.png`, fullPage: true });
   await context.close();
 }
