@@ -62,4 +62,3 @@
 - [ ] **Step 1: Intercept login/session/catalog requests with synthetic responses.**
 - [ ] **Step 2: Capture desktop and mobile Products views without any real credentials or data.**
 - [ ] **Step 3: Inspect both images for overflow, hierarchy, touch sizing, and state clarity.**
-
