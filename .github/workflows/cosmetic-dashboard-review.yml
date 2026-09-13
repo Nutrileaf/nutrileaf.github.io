@@ -1,0 +1,58 @@
+name: Cosmetic Dashboard Review Verify
+
+on:
+  push:
+    branches:
+      - cosmetic-usability-review-dashboard
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Full dashboard and storefront regression suite
+        run: npm test
+
+      - name: Dashboard JavaScript syntax
+        run: |
+          node --check dashboard/model.js
+          node --check dashboard/app.js
+          node --check dashboard/orders-model.js
+          node --check dashboard/orders.js
+
+      - name: Review security boundary scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q './cosmetic-review.css' dashboard/index.html
+          ! grep -RniE 'NUTRILEAF_(PROD_)?ADMIN_TOKEN|STRIPE_SECRET|PAYPAL_CLIENT_SECRET|EASYPOST|localStorage.*token|sessionStorage.*token' -- dashboard
+          ! grep -RniE 'Authorization:[[:space:]]*Bearer|/client/v4/accounts' -- dashboard
+
+      - name: Install isolated screenshot runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Capture synthetic review previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8766 --bind 127.0.0.1 >/tmp/nutrileaf-dashboard-preview-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          node tests/capture-dashboard-preview.mjs
+
+      - name: Upload sanitized review previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: cosmetic-dashboard-review-${{ github.run_id }}
+          path: artifacts/cosmetic-dashboard/*.png
+          retention-days: 14
