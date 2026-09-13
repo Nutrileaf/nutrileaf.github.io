@@ -13,7 +13,7 @@ const products = [
 const browser = await chromium.launch({ headless: true });
 for (const [name, config] of Object.entries({
   desktop: { viewport: { width: 1440, height: 1000 }, openEditor: false, photoHeight: "132px" },
-  mobile: { viewport: { width: 390, height: 844 }, openEditor: true, photoHeight: "180px" }
+  mobile: { viewport: { width: 390, height: 844 }, openEditor: true, photoHeight: "132px" }
 })) {
   const context = await browser.newContext({ viewport: config.viewport });
   const page = await context.newPage();
