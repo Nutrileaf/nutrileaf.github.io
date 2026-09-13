@@ -17,4 +17,3 @@ Create a review-only visual and usability polish layer on `cosmetic-usability-re
 - Test stylesheet placement, touch target size, focus visibility, responsive single-column layout, contained product images, semantic state styling, and absence of privileged credentials.
 - Run the complete dashboard/storefront regression suite and JavaScript syntax checks.
 - Use a branch-restricted, non-deploying GitHub Actions verifier.
-
