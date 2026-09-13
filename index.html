@@ -7,7 +7,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Nutrileaf | Handmade Beauty & Botanical Goods</title>
   <meta name="description" content="Nutrileaf handmade soaps, serums, lotions, plants and botanical goods.">
+  <link rel="canonical" href="https://nutrileaf.github.io/">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="post-publication-polish.css">
 </head>
 <body>
 <header class="site-header">
@@ -28,10 +30,11 @@
     </button>
   </nav>
 </header>
+<main id="home">
 <section class="shop" id="shop">
   <div class="collection-banner">
   <div class="collection-banner-content">
-    <h2>The Collection</h2>
+    <h1>The Collection</h1>
     <div class="collection-divider" aria-hidden="true"><span>◆</span></div>
     <div class="category-pill-wrap">
       <button type="button" class="category-pill" id="categoryPill" aria-haspopup="listbox" aria-expanded="false">
@@ -55,7 +58,6 @@
   <div class="products" id="products"></div>
 </section>
 
-<main id="home">
 <section class="reviews" id="reviews">
   <div class="reviews-backdrop" aria-hidden="true"></div>
   <div class="reviews-content">
@@ -65,7 +67,7 @@
 
     <div class="review-summary">
       <div class="review-score">
-        <div class="review-stars" aria-label="4.93 out of 5 stars">★★★★★</div>
+        <div class="review-stars" aria-label="4.95 out of 5 stars">★★★★★</div>
         <strong>4.95 / 5</strong>
         <span>Based on 125 matched Etsy reviews</span>
       </div>
@@ -103,18 +105,17 @@
 </section>
 <section class="story" id="about">
   <div><p class="eyebrow">OUR STORY</p><h2>Made by hand. Chosen with intention.</h2>
-  <p>Nutrileaf brings together handmade beauty products and living botanicals in one thoughtfully curated collection. Every item can be presented with your wife's real story, ingredients, sourcing and care instructions.</p>
-  <p class="halal-statement"><strong>Halal</strong> — Nutrileaf products are made with halal ingredients and practices. Product-specific ingredient information can be provided on each product page.</p>
-  <p class="muted">This section is ready to customize with her story and brand photography.</p></div>
+  <p>Nutrileaf brings together handmade beauty products and living botanicals in one thoughtfully curated collection. Product details, sourcing notes and care information are shared where available.</p>
+  <p class="halal-statement"><strong>Halal</strong> — Nutrileaf products are made with halal ingredients and practices. Product-specific ingredient information can be provided on each product page.</p></div>
 </section>
 
 <section class="newsletter">
   <p class="eyebrow">STAY CONNECTED</p><h2>New batches & botanical finds</h2>
-  <p>Nutrileaf list for new products, restocks and local updates.</p>
-  <form id="newsletterForm"><input type="email" placeholder="Your email address" required><button class="button">Join</button></form>
+  <p>Get updates about new products, restocks and local availability.</p>
+  <form id="newsletterForm"><label class="sr-only" for="newsletterEmail">Email address</label><input id="newsletterEmail" type="email" placeholder="Your email address" required><button class="button">Join</button></form>
 </section>
 
-<section class="contact" id="contact"><p class="eyebrow">CONTACT</p><h2>Questions about an order?</h2><p>Nutrileaf's email, social links, pickup information and business hours.</p></section>
+<section class="contact" id="contact"><p class="eyebrow">CONTACT</p><h2>Questions about a product?</h2><p>Reach out to Nutrileaf for product support and local information.</p></section>
 </main>
 
 <div class="cart-drawer" id="cartDrawer" hidden aria-hidden="true">
@@ -153,5 +154,6 @@
 <footer><span>© 2026 <span class="inline-brand">Nutrileaf</span></span><span>Handmade • Botanical • Beauty</span></footer>
 <script type="module" src="p27-catalog-launch.js"></script>
 <script type="module" src="script.js"></script>
+<script type="module" src="post-publication-polish.js"></script>
 </body>
 </html>
