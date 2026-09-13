@@ -15,7 +15,6 @@ test("dashboard review layer has comfortable controls and responsive layouts", (
   const css = readFileSync(stylesheet, "utf8");
   assert.match(css, /\.pill\s*\{[^}]*min-height:\s*48px/s);
   assert.match(css, /:focus-visible/);
-  assert.match(css, /\.product-card-photo img\s*\{[^}]*object-fit:\s*contain/s);
   assert.match(css, /\.message\.error[\s\S]*border-left/);
   assert.match(css, /\.message\.success[\s\S]*border-left/);
   assert.match(css, /@media\s*\(max-width:\s*680px\)[\s\S]*grid-template-columns:\s*1fr/);

@@ -153,19 +153,6 @@ textarea:hover {
   box-shadow: 0 17px 38px rgba(47, 78, 59, 0.13);
 }
 
-.product-card-photo {
-  height: 174px;
-  padding: 14px;
-  background: linear-gradient(145deg, #eef7f0, #fbf1e9);
-}
-
-.product-card-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 14px;
-}
-
 .product-card-body {
   padding: 18px 20px 12px;
 }
@@ -296,21 +283,12 @@ textarea:hover {
     min-height: 50px;
   }
 
-  .product-card-photo {
-    height: min(64vw, 240px);
-  }
-
   .editor-head {
     flex-direction: column;
   }
 
   .editor-head .pill {
     width: 100%;
-  }
-
-  .photo-preview-wrap,
-  .starting-preview-wrap {
-    min-height: 190px;
   }
 }
 
