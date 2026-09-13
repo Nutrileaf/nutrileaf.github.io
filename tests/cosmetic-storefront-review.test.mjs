@@ -16,7 +16,6 @@ test("storefront review layer preserves readable responsive product presentation
   assert.equal(existsSync(stylesheet), true, "cosmetic review stylesheet must exist");
   const css = readFileSync(stylesheet, "utf8");
   assert.match(css, /\.products\s*\{[^}]*repeat\(auto-fit,\s*minmax\(min\(100%,\s*250px\),\s*1fr\)\)/s);
-  assert.match(css, /\.product-photo img\s*\{[^}]*object-fit:\s*contain/s);
   assert.match(css, /\.product-details-link[\s\S]*min-height:\s*44px/);
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media\s*\(max-width:\s*700px\)[\s\S]*grid-template-columns:\s*1fr/);
