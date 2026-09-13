@@ -19,4 +19,3 @@ Create a review-only visual polish layer on `cosmetic-usability-review-storefron
 - Test the stylesheet link, responsive grid, focus indicators, image containment, pill controls, reduced-motion support, and dormant checkout boundary.
 - Run the complete storefront regression suite and JavaScript syntax checks.
 - Use a branch-restricted, non-deploying GitHub Actions verifier.
-
