@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { mkdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 
@@ -11,8 +12,8 @@ const products = [
 
 const browser = await chromium.launch({ headless: true });
 for (const [name, config] of Object.entries({
-  desktop: { viewport: { width: 1440, height: 1000 }, openEditor: false },
-  mobile: { viewport: { width: 390, height: 844 }, openEditor: true }
+  desktop: { viewport: { width: 1440, height: 1000 }, openEditor: false, photoHeight: "132px" },
+  mobile: { viewport: { width: 390, height: 844 }, openEditor: true, photoHeight: "180px" }
 })) {
   const context = await browser.newContext({ viewport: config.viewport });
   const page = await context.newPage();
@@ -21,6 +22,15 @@ for (const [name, config] of Object.entries({
   await page.route("**/media/products/**", (route) => route.fulfill({ status: 200, contentType: "image/png", body: readFileSync("turmeric-carrot-approved-ad.png") }));
   await page.goto("http://127.0.0.1:8766/dashboard/", { waitUntil: "networkidle" });
   await page.locator(".product-card").first().waitFor();
+  const photoStyle = await page.locator(".product-card-photo").first().evaluate((element) => {
+    const image = element.querySelector("img");
+    return {
+      height: getComputedStyle(element).height,
+      objectFit: image ? getComputedStyle(image).objectFit : null
+    };
+  });
+  assert.equal(photoStyle.height, config.photoHeight, `${name} product photos retain their established height`);
+  assert.equal(photoStyle.objectFit, "cover", `${name} product photos retain their established crop`);
   if (config.openEditor) {
     await page.locator(".product-card").first().getByRole("button", { name: "Edit Product" }).click();
     await page.locator("#editor").waitFor();
