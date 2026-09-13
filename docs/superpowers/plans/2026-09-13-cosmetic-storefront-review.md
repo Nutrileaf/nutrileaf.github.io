@@ -63,4 +63,3 @@
 - [ ] **Step 1: Launch the branch locally and intercept catalog reads with synthetic fixtures.**
 - [ ] **Step 2: Capture a desktop and mobile viewport.**
 - [ ] **Step 3: Inspect both images for overflow, cropping, focus, spacing, and accidental commerce controls.**
-
