@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - development
-      - guarded-p31-development-integration-20260914
   workflow_dispatch:
 
 permissions:
