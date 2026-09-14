@@ -1,0 +1,26 @@
+name: P27 Catalog UI Verify
+
+on:
+  push:
+    branches:
+      - p27-product-catalog-launch-readiness
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Full storefront suite
+        run: npm test
+      - name: P27 public boundary scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RniE 'NUTRILEAF_(PROD_)?ADMIN_TOKEN|DASHBOARD_(PROD_)?SESSION_SECRET|STRIPE_SECRET|PAYPAL_CLIENT_SECRET|EASYPOST' -- index.html script.js p23-storefront-compat.js dashboard || exit 1

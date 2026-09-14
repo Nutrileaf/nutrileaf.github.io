@@ -1,0 +1,35 @@
+name: P31 Operations Readiness Dashboard UI Verify
+
+on:
+  push:
+    branches:
+      - p31-operations-readiness-dashboard
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: P31 focused contracts
+        run: node --test tests/p31-*.test.mjs
+      - name: Full storefront suite
+        run: npm test
+      - name: Syntax checks
+        run: |
+          node --check dashboard/operations-model.js
+          node --check dashboard/orders.js
+      - name: Secret and privileged-browser scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -REn 'Bearer |sk_(live|test)_|EASYPOST|NUTRILEAF_(TEST|PROD)_ADMIN_TOKEN' dashboard; then
+            echo "privileged credential material found in dashboard assets" >&2
+            exit 1
+          fi
