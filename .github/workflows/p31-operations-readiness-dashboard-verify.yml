@@ -3,7 +3,8 @@ name: P31 Operations Readiness Dashboard UI Verify
 on:
   push:
     branches:
-      - p31-operations-readiness-dashboard
+      - development
+      - guarded-p31-development-integration-20260914
   workflow_dispatch:
 
 permissions:
