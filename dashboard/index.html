@@ -164,6 +164,10 @@
       </div>
       <section id="ordersPanel" hidden aria-labelledby="ordersTitle">
         <header class="dashboard-header"><div><p class="eyebrow">TEST ORDER DASHBOARD</p><h2 id="ordersTitle">Orders</h2><p class="muted">Review existing order, payment, customer, and shipping information. No order changes are available here.</p></div><button class="pill quiet" id="ordersRefresh" type="button">Refresh</button></header>
+        <section class="warning-card" id="operationsReadiness" role="status" aria-live="polite" hidden>
+          <strong id="operationsReadinessSummary">Checking operational readiness…</strong>
+          <ul id="operationsReadinessItems"></ul>
+        </section>
         <section class="toolbar" aria-label="Orders filters">
           <label class="search-field"><span>Find an order</span><input id="ordersSearch" type="search" placeholder="Order number, customer, or email" maxlength="100"></label>
           <div class="filter-panel"><label>Order status<select id="orderStatusFilter"><option value="">All orders</option><option value="PAYMENT_PENDING">Awaiting payment</option><option value="PAID">Paid</option><option value="PROCESSING">Preparing</option><option value="REFUNDED">Refunded</option><option value="CANCELLED">Cancelled</option><option value="FAILED">Failed</option></select></label><label>Payment<select id="paymentStatusFilter"><option value="">All payments</option><option value="PAID">Payment received</option><option value="PENDING">Pending</option><option value="FAILED">Failed</option></select></label><label>Attention<select id="attentionFilter"><option value="">All</option><option value="needs_attention">Needs attention</option><option value="none">No attention needed</option></select></label></div>
