@@ -1,0 +1,25 @@
+name: P33 Storefront Workspace Export
+
+on:
+  push:
+    branches:
+      - p33-operational-recovery-alerting
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive repository source
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --exclude=.git -czf "$RUNNER_TEMP/p33-storefront-workspace.tar.gz" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p33-storefront-workspace-${{ github.sha }}
+          path: ${{ runner.temp }}/p33-storefront-workspace.tar.gz
+          retention-days: 1
