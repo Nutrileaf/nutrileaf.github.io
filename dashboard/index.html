@@ -168,6 +168,13 @@
           <strong id="operationsReadinessSummary">Checking operational readiness…</strong>
           <ul id="operationsReadinessItems"></ul>
         </section>
+        <section class="incidents-workspace" id="operationsIncidents" aria-labelledby="incidentsTitle" hidden>
+          <div class="incidents-heading"><div><h3 id="incidentsTitle">Operational incidents</h3><p class="muted">Review detected problems and use only the bounded recovery steps shown here.</p></div><button class="pill quiet small" id="incidentsRefresh" type="button">Refresh incidents</button></div>
+          <div class="incident-filters" aria-label="Incident filters"><label>State<select id="incidentStateFilter"><option value="">All states</option><option value="OPEN">Open</option><option value="ACKNOWLEDGED">Acknowledged</option><option value="RECOVERING">Recovery in progress</option><option value="RESOLVED">Resolved</option></select></label><label>Type<select id="incidentTypeFilter"><option value="">All types</option><option value="STUCK_ORDER">Stuck order</option><option value="EXPIRED_INVENTORY_RESERVATION">Expired inventory reservation</option><option value="FAILED_WEBHOOK">Failed webhook</option><option value="REFUND_INCONSISTENCY">Refund inconsistency</option><option value="READINESS_REGRESSION">Readiness regression</option><option value="SHIPPING_ANOMALY">Shipping anomaly</option></select></label></div>
+          <p class="message" id="incidentsMessage" role="status" aria-live="polite" hidden></p>
+          <div class="incidents-list" id="incidentsList" aria-label="Operational incidents"></div>
+          <button class="pill quiet load-more" id="incidentsMore" type="button" hidden>Load more incidents</button>
+        </section>
         <section class="toolbar" aria-label="Orders filters">
           <label class="search-field"><span>Find an order</span><input id="ordersSearch" type="search" placeholder="Order number, customer, or email" maxlength="100"></label>
           <div class="filter-panel"><label>Order status<select id="orderStatusFilter"><option value="">All orders</option><option value="PAYMENT_PENDING">Awaiting payment</option><option value="PAID">Paid</option><option value="PROCESSING">Preparing</option><option value="REFUNDED">Refunded</option><option value="CANCELLED">Cancelled</option><option value="FAILED">Failed</option></select></label><label>Payment<select id="paymentStatusFilter"><option value="">All payments</option><option value="PAID">Payment received</option><option value="PENDING">Pending</option><option value="FAILED">Failed</option></select></label><label>Attention<select id="attentionFilter"><option value="">All</option><option value="needs_attention">Needs attention</option><option value="none">No attention needed</option></select></label></div>
@@ -187,5 +194,6 @@
 
   <script type="module" src="./app.js"></script>
   <script type="module" src="./orders.js"></script>
+  <script type="module" src="./incidents.js"></script>
 </body>
 </html>
