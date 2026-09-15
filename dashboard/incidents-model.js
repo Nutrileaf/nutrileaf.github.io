@@ -62,7 +62,7 @@ export function normalizeIncident(value) {
   for (const key of ['affected_count', 'occurrence_count', 'first_seen_at', 'last_seen_at', 'updated_at']) {
     if (!Number.isSafeInteger(value[key]) || value[key] < 0) invalid();
   }
-  if (value.affected_count < 1 || value.occurrence_count < 1 ||
+  if (value.occurrence_count < 1 ||
       !Number.isSafeInteger(value.version) || value.version < 1) invalid();
   for (const key of ['acknowledged_at', 'recovery_started_at', 'resolved_at']) {
     if (value[key] !== null && (!Number.isSafeInteger(value[key]) || value[key] < 0)) invalid();
