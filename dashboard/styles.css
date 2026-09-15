@@ -279,6 +279,49 @@ textarea { resize: vertical; }
 }
 .warning-card p { margin: 6px 0 12px; overflow-wrap: anywhere; }
 
+.incidents-workspace {
+  margin: 18px 0 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 8px 28px rgba(45, 74, 57, 0.06);
+}
+.incidents-heading, .incident-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.incidents-heading h3, .incident-card h4 { margin: 0; }
+.incidents-heading p { margin: 5px 0 0; }
+.incident-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.incidents-list { display: grid; gap: 12px; }
+.incident-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fcfdfb;
+}
+.incident-card > p { margin: 9px 0 0; }
+.incident-facts { font-size: 0.88rem; }
+.incident-actions { margin-top: 14px; }
+.status-chip.incident-open { background: var(--peach); }
+.status-chip.incident-acknowledged { background: var(--blue); }
+.status-chip.incident-recovering { background: var(--yellow); }
+.status-chip.incident-resolved { background: var(--sage); }
+
+@media (max-width: 640px) {
+  .incidents-heading { display: grid; }
+  .incidents-heading .pill { width: 100%; }
+  .incident-filters { grid-template-columns: 1fr; }
+}
+
 .editor-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
