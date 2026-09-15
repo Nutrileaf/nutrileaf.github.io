@@ -48,6 +48,18 @@ test('incident model validates the redacted response shape', () => {
   ]) assert.throws(() => normalizeIncident(bad), /incident/i);
 });
 
+test('resolved incidents accept the backend zero affected-count contract', () => {
+  const resolved = {
+    ...incident,
+    state: 'RESOLVED',
+    affected_count: 0,
+    version: 5,
+    resolved_at: 1_700_000_200,
+    updated_at: 1_700_000_200
+  };
+  assert.deepEqual(normalizeIncident(resolved), resolved);
+});
+
 test('incident labels and lifecycle actions stay plain-language and bounded', () => {
   assert.equal(incidentTypeLabel('EXPIRED_INVENTORY_RESERVATION'), 'Expired inventory reservation');
   assert.equal(incidentReasonLabel('RESERVATION_EXPIRED'), 'A stock reservation passed its expiry time');
