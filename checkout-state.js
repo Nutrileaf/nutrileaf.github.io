@@ -22,8 +22,9 @@ export function normalizeCart(cart) {
   return [...quantities.entries()].map(([product_id, quantity]) => ({ product_id, quantity }));
 }
 
-export function createCheckoutRequest({ cart, customer }) {
+export function createCheckoutRequest({ cart, customer, shippingRateId } = {}) {
   const address = customer?.shipping_address || {};
+  const shipping_rate_id = cleanText(shippingRateId);
   return {
     customer: {
       email: cleanText(customer?.email).toLowerCase(),
@@ -40,7 +41,8 @@ export function createCheckoutRequest({ cart, customer }) {
         country: cleanText(address.country).toUpperCase()
       }
     },
-    items: normalizeCart(cart)
+    items: normalizeCart(cart),
+    ...(shipping_rate_id ? { shipping_rate_id } : {})
   };
 }
 
