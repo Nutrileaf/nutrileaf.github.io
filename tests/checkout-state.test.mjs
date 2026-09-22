@@ -48,7 +48,7 @@ test("validates required checkout fields and US shipping before submission", () 
     email: "Enter a valid email address.",
     items: "Add at least one available product to your cart."
   });
-  assert.deepEqual(validateCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1 }], customer })), {});
+  assert.deepEqual(validateCheckoutRequest(createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1 }], customer })), {});
 });
 
 test("fingerprints only normalized customer and authoritative cart input", () => {
