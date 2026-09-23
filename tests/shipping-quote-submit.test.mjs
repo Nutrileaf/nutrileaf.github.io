@@ -3,10 +3,11 @@ import test from "node:test";
 
 import { requestShippingRates } from "../shipping-quote-submit.js";
 
-test("P34 requests only address and cart IDs from the existing P29 rate endpoint", async () => {
+test("P34 binds the checkout email with address and cart IDs for the existing P29 rate endpoint", async () => {
   let call;
   const result = await requestShippingRates({
     apiBase: "https://api.example.test",
+    customerEmail: " Buyer@Example.test ",
     body: {
       shipping_address: { name: "Buyer", address_line1: "1 Test St", city: "San Diego", state: "CA", postal_code: "92101", country: "US" },
       items: [{ product_id: "product-1", quantity: 1 }]
@@ -19,6 +20,7 @@ test("P34 requests only address and cart IDs from the existing P29 rate endpoint
   assert.equal(call[0], "https://api.example.test/checkout/shipping/rates");
   assert.equal(call[1].method, "POST");
   assert.deepEqual(JSON.parse(call[1].body), {
+    customer_email: "buyer@example.test",
     shipping_address: { name: "Buyer", address_line1: "1 Test St", city: "San Diego", state: "CA", postal_code: "92101", country: "US" },
     items: [{ product_id: "product-1", quantity: 1 }]
   });
