@@ -39,9 +39,7 @@ test("normalizes cart entries to authoritative product IDs and quantities", () =
     { product_id: "product-1", quantity: 2, name: "Browser name", price: 1 },
     { product_id: "product-1", quantity: 1, price: 999 },
     { product_id: "product-2", quantity: 0 }
-  ]), [
-    { product_id: "product-1", quantity: 3 }
-  ]);
+  ]), [{ product_id: "product-1", quantity: 3 }]);
 });
 
 test("validates required checkout fields and US shipping before submission", () => {
@@ -50,42 +48,30 @@ test("validates required checkout fields and US shipping before submission", () 
     email: "Enter a valid email address.",
     items: "Add at least one available product to your cart."
   });
-  assert.deepEqual(validateCheckoutRequest(createCheckoutRequest({
-    cart: [{ product_id: "product-1", quantity: 1 }],
-    customer
-  })), {});
+  assert.deepEqual(validateCheckoutRequest(createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1 }], customer })), {});
 });
 
 test("fingerprints only normalized customer and authoritative cart input", () => {
-  const first = checkoutFingerprint(createCheckoutRequest({
-    cart: [{ product_id: "product-1", quantity: 1, price: 1 }],
-    customer
-  }));
-  const same = checkoutFingerprint(createCheckoutRequest({
-    cart: [{ product_id: "product-1", quantity: 1, name: "ignored" }],
-    customer
-  }));
-  const changed = checkoutFingerprint(createCheckoutRequest({
-    cart: [{ product_id: "product-1", quantity: 2 }],
-    customer
-  }));
+  const first = checkoutFingerprint(createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1, price: 1 }], customer }));
+  const same = checkoutFingerprint(createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1, name: "ignored" }], customer }));
+  const changed = checkoutFingerprint(createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 2 }], customer }));
   assert.equal(first, same);
   assert.notEqual(first, changed);
 });
 
 test("creates a P13 request without browser product text or prices", () => {
-  assert.deepEqual(createCheckoutRequest({
-    cart: [{ product_id: "product-1", quantity: 2, name: "Browser name", price: 1 }],
-    customer
-  }), {
-    customer: {
-      ...customer,
-      email: "buyer@example.test",
-      phone: null,
-      shipping_address: { ...customer.shipping_address, address_line2: null }
-    },
+  assert.deepEqual(createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 2, name: "Browser name", price: 1 }], customer }), {
+    customer: { ...customer, email: "buyer@example.test", phone: null, shipping_address: { ...customer.shipping_address, address_line2: null } },
     items: [{ product_id: "product-1", quantity: 2 }]
   });
+});
+
+test("adds only a server-issued P29 shipping rate ID and makes it idempotent input", () => {
+  const selected = createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1 }], customer, shippingRateId: "rate-internal-1" });
+  const noSelection = createCheckoutRequest({ cart: [{ product_id: "product-1", quantity: 1 }], customer });
+  assert.equal(selected.shipping_rate_id, "rate-internal-1");
+  assert.equal(Object.hasOwn(selected, "shipping_amount"), false);
+  assert.notEqual(checkoutFingerprint(selected), checkoutFingerprint(noSelection));
 });
 
 test("keeps retry keys for identical input and replaces them after success", () => {
