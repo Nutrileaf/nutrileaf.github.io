@@ -1,9 +1,11 @@
-export async function requestShippingRates({ apiBase, body, fetchImpl = fetch }) {
+export async function requestShippingRates({ apiBase, body, customerEmail, fetchImpl = fetch }) {
+  const customer_email = typeof customerEmail === "string" ? customerEmail.trim().toLowerCase() : "";
+  const { customer_email: _ignoredCustomerEmail, ...shippingBody } = body || {};
   try {
     const response = await fetchImpl(`${apiBase}/checkout/shipping/rates`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ ...shippingBody, customer_email })
     });
     let payload = null;
     try { payload = await response.json(); } catch {}
