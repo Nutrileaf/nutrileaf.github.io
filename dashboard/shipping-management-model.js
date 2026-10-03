@@ -114,6 +114,12 @@ export function shippingFormFromProfile(profile = {}) {
   };
 }
 
+export function shippingProfileDisplayState(profile = {}) {
+  if (profile.configuration_error) return { configured: false, label: 'Needs repair' };
+  if (profile.readiness_status === 'CONFIGURED') return { configured: true, label: 'Configured' };
+  return { configured: false, label: 'Not configured' };
+}
+
 function normalizedForm(input = {}) {
   const text = (value) => typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
   return {

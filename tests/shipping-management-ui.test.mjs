@@ -12,6 +12,7 @@ import {
   parseWeightTenths,
   normalizeShippingPolicies,
   shippingPackageFieldVisibility,
+  shippingProfileDisplayState,
   shippingFormFromProfile,
   shippingProfileDraft,
   shippingProfileFingerprint,
@@ -20,6 +21,17 @@ import {
   shippingPolicyIsDirty,
   shippingServicesStatus
 } from '../dashboard/shipping-management-model.js';
+
+test('invalid configured profiles display needs repair instead of configured', () => {
+  assert.deepEqual(shippingProfileDisplayState({
+    readiness_status: 'CONFIGURED',
+    configuration_error: 'INVALID_PACKAGE_PROFILE'
+  }), { configured: false, label: 'Needs repair' });
+  assert.deepEqual(shippingProfileDisplayState({
+    readiness_status: 'CONFIGURED',
+    configuration_error: null
+  }), { configured: true, label: 'Configured' });
+});
 
 test('shipping display conversion uses decimal strings and exact integer tenths', () => {
   assert.equal(parseWeightTenths('0', '0.1'), 1);

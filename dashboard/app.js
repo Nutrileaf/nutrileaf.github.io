@@ -15,6 +15,7 @@ import {
 import {
   createShippingMutationTracker,
   shippingPackageFieldVisibility,
+  shippingProfileDisplayState,
   shippingFormFromProfile,
   shippingProfileDraft,
   shippingProfileIsDirty
@@ -462,6 +463,7 @@ function updateShippingPackageFields() {
 
 function populateShippingProfile(profile) {
   const form = shippingFormFromProfile(profile);
+  const displayState = shippingProfileDisplayState(profile);
   state.shippingProfile = profile;
   els.shippingPackageMethod.value = form.package_method;
   els.shippingPounds.value = form.pounds;
@@ -470,7 +472,7 @@ function populateShippingProfile(profile) {
   els.shippingWidth.value = form.width;
   els.shippingHeight.value = form.height;
   els.shippingPredefinedPackage.value = form.predefined_package;
-  els.shippingReadiness.textContent = profile.readiness_status === "CONFIGURED" ? "Configured" : "Not configured";
+  els.shippingReadiness.textContent = displayState.label;
   els.shippingVersion.textContent = `Version ${profile.version}`;
   els.shippingInactiveWarning.hidden = profile.readiness_status !== "UNCONFIGURED";
   els.deactivateShippingProfileButton.disabled = profile.readiness_status === "UNCONFIGURED";
