@@ -372,6 +372,31 @@ textarea { resize: vertical; }
 .action-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .form-actions { padding-top: 4px; }
 
+.shipping-profile-section {
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #f8fcf9, #fffaf5);
+}
+.shipping-profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.shipping-profile-heading p { margin-bottom: 0; max-width: 680px; }
+.shipping-profile-state { display: grid; justify-items: end; gap: 5px; min-width: 180px; }
+.shipping-profile-state > span:not(.unsaved-indicator) { color: var(--muted); font-size: 0.82rem; }
+.shipping-inactive-warning { margin-bottom: 0; }
+.shipping-profile-form { display: grid; gap: 16px; margin-top: 18px; }
+.shipping-fieldset { margin: 0; border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+.shipping-fieldset legend { padding: 0 7px; color: #3f5246; font-size: 0.9rem; font-weight: 800; }
+.shipping-fields { display: grid; gap: 12px; }
+.shipping-fields.two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.shipping-fields.three-column { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.shipping-profile-actions { padding-top: 2px; }
+
 .operator-section {
   display: grid;
   grid-template-columns: 1fr minmax(120px, 180px) auto;
@@ -431,6 +456,9 @@ textarea { resize: vertical; }
   .editor { padding: 18px; }
   .editor-head { align-items: flex-start; }
   .editor-form, .guided-section, .operator-section, .photo-section { grid-template-columns: 1fr; }
+  .shipping-profile-heading { display: grid; }
+  .shipping-profile-state { justify-items: start; }
+  .shipping-fields.two-column, .shipping-fields.three-column { grid-template-columns: 1fr; }
   .full-width, .guided-section > div:first-child, .operator-section .action-row, .photo-section .action-row { grid-column: auto; }
   .action-row .pill { flex: 1 1 140px; }
   .photo-preview-wrap, .starting-preview-wrap { width: 100%; height: 180px; }

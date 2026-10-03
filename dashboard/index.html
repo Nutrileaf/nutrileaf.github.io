@@ -13,7 +13,7 @@
       <div class="brand-mark" aria-hidden="true">NL</div>
       <p class="eyebrow">TEST PRODUCT DASHBOARD</p>
       <h1 id="loginTitle">NutriLeaf Products</h1>
-      <p class="muted">Sign in to manage TEST products. This dashboard does not process payments or shipping.</p>
+      <p class="muted">Sign in to manage TEST products. This dashboard does not process payments or purchase shipping labels.</p>
       <form id="loginForm" class="stack">
         <label for="password">Dashboard password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="512">
@@ -129,6 +129,79 @@
             <button class="pill quiet" id="cancelProductButton" type="button">Cancel</button>
           </div>
         </form>
+
+        <section class="shipping-profile-section" id="shippingProfileSection" hidden aria-labelledby="shippingProfileTitle">
+          <div class="shipping-profile-heading">
+            <div>
+              <h3 id="shippingProfileTitle">Shipping Profile</h3>
+              <p class="muted">Save one reviewed single-unit package profile for future quotes. Configuration does not guarantee an available rate. Multi-product orders and quantities greater than one still require manual package review.</p>
+            </div>
+            <div class="shipping-profile-state" aria-live="polite">
+              <strong id="shippingReadiness">Loading…</strong>
+              <span id="shippingVersion">Version —</span>
+              <span class="unsaved-indicator" id="shippingDirtyIndicator" hidden>Unsaved shipping changes</span>
+            </div>
+          </div>
+
+          <div class="warning-card shipping-inactive-warning" id="shippingInactiveWarning" role="status" hidden>
+            <strong>Not configured — values inactive</strong>
+            <p>Saved measurements remain visible, but they are not used for shipping rates. Review and save explicitly to configure this profile again.</p>
+          </div>
+          <p class="message" id="shippingProfileMessage" role="status" aria-live="polite" hidden></p>
+
+          <form id="shippingProfileForm" class="shipping-profile-form">
+            <label for="shippingPackageMethod">Package method</label>
+            <select id="shippingPackageMethod" required>
+              <option value="">Choose a package method</option>
+              <option value="CUSTOM">Custom dimensions</option>
+              <option value="PREDEFINED">Approved predefined package</option>
+            </select>
+
+            <fieldset class="shipping-fieldset">
+              <legend>Single-unit weight</legend>
+              <div class="shipping-fields two-column">
+                <label for="shippingPounds">Pounds
+                  <input id="shippingPounds" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="0">
+                </label>
+                <label for="shippingOunces">Ounces
+                  <input id="shippingOunces" inputmode="decimal" autocomplete="off" maxlength="4" placeholder="0.0">
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="shipping-fieldset" id="shippingCustomFields" hidden>
+              <legend>Custom dimensions in inches</legend>
+              <div class="shipping-fields three-column">
+                <label for="shippingLength">Length
+                  <input id="shippingLength" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.0">
+                </label>
+                <label for="shippingWidth">Width
+                  <input id="shippingWidth" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.0">
+                </label>
+                <label for="shippingHeight">Height
+                  <input id="shippingHeight" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.0">
+                </label>
+              </div>
+            </fieldset>
+
+            <div id="shippingPredefinedFields" hidden>
+              <label for="shippingPredefinedPackage">USPS Priority Mail Flat Rate package
+                <select id="shippingPredefinedPackage">
+                  <option value="">Choose the physical USPS package</option>
+                  <option value="SmallFlatRateBox">Small Flat Rate Box</option>
+                  <option value="MediumFlatRateBox">Medium Flat Rate Box</option>
+                  <option value="LargeFlatRateBox">Large Flat Rate Box</option>
+                </select>
+              </label>
+              <p class="muted">Select one only when the product will actually ship in that USPS Priority Mail Flat Rate package.</p>
+            </div>
+
+            <div class="action-row shipping-profile-actions">
+              <button class="pill primary" id="saveShippingProfileButton" type="submit">Save shipping profile</button>
+              <button class="pill warning" id="deactivateShippingProfileButton" type="button">Mark not configured</button>
+            </div>
+          </form>
+        </section>
 
         <section class="operator-section" id="stockSection" hidden aria-labelledby="stockTitle">
           <div>

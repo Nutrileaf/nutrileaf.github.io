@@ -41,5 +41,7 @@ test('orders screen contains an accessible read-only readiness region', () => {
   assert.match(js, /\/api\/operations\/readiness/);
   assert.match(js, /readinessSummary/);
   assert.match(js, /readinessItems/);
-  assert.doesNotMatch(html, /(?:resolve|retry|delete|refund|ship)[^<]*<\/button>/i);
+  const readinessRegion = html.match(/<section[^>]+id="operationsReadiness"[\s\S]*?<\/section>/)?.[0] || '';
+  assert.ok(readinessRegion);
+  assert.doesNotMatch(readinessRegion, /<button\b/i);
 });

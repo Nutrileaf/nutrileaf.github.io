@@ -84,14 +84,15 @@ test("dashboard document is buildless, same-origin, accessible, and contains the
   assert.equal(/<script(?![^>]*\bsrc=)[^>]*>/i.test(html), false);
   for (const text of [
     "Products", "Add Product", "Edit Product", "Add stock", "Remove stock",
-    "Add photo", "Replace photo", "Remove photo", "Show in store", "Hide from store", "Log out"
+    "Add photo", "Replace photo", "Remove photo", "Show in store", "Hide from store", "Log out",
+    "Shipping Profile", "Save shipping profile", "Mark not configured"
   ]) assert.ok(html.includes(text), text);
   assert.match(html, /type="password"/);
   assert.equal(/name="(?:token|secret|api[_-]?key|authorization)"/i.test(html), false);
 });
 
 test("frontend sources do not contain privileged credential names, persistent token storage, or direct commerce API calls", () => {
-  const sources = ["index.html", "styles.css", "app.js", "model.js"].map(dashboardSource).join("\n");
+  const sources = ["index.html", "styles.css", "app.js", "model.js", "shipping-management-model.js"].map(dashboardSource).join("\n");
   for (const forbidden of [
     "NUTRILEAF_TEST_ADMIN_TOKEN",
     "NUTRILEAF_DASHBOARD_TEST_SESSION_SECRET",

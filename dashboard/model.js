@@ -151,3 +151,5 @@ export function buildMutationHeaders(csrfToken, requestId, json = false) {
     ...(json ? { "Content-Type": "application/json" } : {})
   };
 }
+
+export { shippingProfileIsDirty } from "./shipping-management-model.js";
