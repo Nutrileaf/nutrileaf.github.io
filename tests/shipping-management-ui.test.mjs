@@ -4,16 +4,21 @@ import { readFileSync } from 'node:fs';
 
 import {
   APPROVED_PREDEFINED_PACKAGES,
+  SHIPPING_SERVICE_DEFINITIONS,
   createShippingMutationTracker,
   formatDimensionTenths,
   formatWeightTenths,
   parseDimensionTenths,
   parseWeightTenths,
+  normalizeShippingPolicies,
   shippingPackageFieldVisibility,
   shippingFormFromProfile,
   shippingProfileDraft,
   shippingProfileFingerprint,
-  shippingProfileIsDirty
+  shippingProfileIsDirty,
+  shippingPolicyDraft,
+  shippingPolicyIsDirty,
+  shippingServicesStatus
 } from '../dashboard/shipping-management-model.js';
 
 test('shipping display conversion uses decimal strings and exact integer tenths', () => {
@@ -122,4 +127,50 @@ test('shipping save path remains separate from product detail mutation fields', 
   for (const forbidden of ['visible_in_store', 'price_cents', 'available_stock', 'product_type', 'photo']) {
     assert.equal(shippingFunction[0].includes(forbidden), false, forbidden);
   }
+});
+
+test('shipping service model accepts exactly the two reviewed USPS registry entries', () => {
+  assert.deepEqual(SHIPPING_SERVICE_DEFINITIONS, [
+    { service_key: 'usps-ground-advantage', display_name: 'USPS Ground Advantage', carrier: 'USPS', provider_service: 'GroundAdvantage', category: 'ECONOMY', speed_rank: 10 },
+    { service_key: 'usps-priority-mail', display_name: 'USPS Priority Mail', carrier: 'USPS', provider_service: 'Priority', category: 'STANDARD', speed_rank: 20 }
+  ]);
+  const policies = normalizeShippingPolicies({ policies: [
+    { service_key: 'usps-ground-advantage', carrier: 'USPS', provider_service: 'GroundAdvantage', category: 'ECONOMY', speed_rank: 10, active: false, policy_revision: 0, updated_at: null },
+    { service_key: 'usps-priority-mail', carrier: 'USPS', provider_service: 'Priority', category: 'STANDARD', speed_rank: 20, active: true, policy_revision: 2, updated_at: 100 }
+  ] });
+  assert.equal(policies.length, 2);
+  assert.throws(() => normalizeShippingPolicies({ policies: [{ ...policies[0], category: 'STANDARD' }, policies[1]] }), /service policy/i);
+  assert.throws(() => normalizeShippingPolicies({ policies: [...policies, { service_key: 'ups-ground' }] }), /service policy/i);
+});
+
+test('service controls have independent dirty state and revision-only mutation authority', () => {
+  const ground = { service_key: 'usps-ground-advantage', active: false, policy_revision: 3 };
+  const priority = { service_key: 'usps-priority-mail', active: true, policy_revision: 5 };
+  assert.equal(shippingPolicyIsDirty(ground, false), false);
+  assert.equal(shippingPolicyIsDirty(ground, true), true);
+  assert.equal(shippingPolicyIsDirty(priority, true), false);
+  assert.deepEqual(shippingPolicyDraft(ground, true), { expected_policy_revision: 3, active: true });
+  assert.deepEqual(Object.keys(shippingPolicyDraft(priority, false)).sort(), ['active', 'expected_policy_revision']);
+});
+
+test('zero enabled shipping services is an explicit fail-closed state', () => {
+  assert.deepEqual(shippingServicesStatus([{ active: false }, { active: false }]), {
+    enabled_count: 0,
+    message: 'No shipping services are enabled. New shipping quotes remain unavailable.'
+  });
+  assert.equal(shippingServicesStatus([{ active: true }, { active: false }]).enabled_count, 1);
+});
+
+test('shipping services page has fixed controls, revision evidence, and no free-text provider identifiers', () => {
+  const html = readFileSync(new URL('../dashboard/index.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../dashboard/shipping-services.js', import.meta.url), 'utf8');
+  for (const id of ['shippingServicesTab', 'shippingServicesPanel', 'shippingServicesList', 'shippingServicesWarning']) {
+    assert.match(html, new RegExp(`id=["']${id}["']`));
+  }
+  assert.match(source, /\/api\/shipping-services/);
+  assert.match(source, /client_mutation_id/);
+  assert.match(source, /SHIPPING_POLICY_CONFLICT/);
+  assert.match(source, /AMBIGUOUS/);
+  assert.doesNotMatch(html, /<input[^>]+(?:carrier|provider_service|category|speed_rank|service_key)/i);
+  assert.doesNotMatch(html, /<textarea[^>]+(?:carrier|service)/i);
 });

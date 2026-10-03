@@ -27,6 +27,9 @@ const els = {
   password: document.querySelector("#password"),
   loginMessage: document.querySelector("#loginMessage"),
   logoutButton: document.querySelector("#logoutButton"),
+  productsWorkspace: document.querySelector("#productsWorkspace"),
+  ordersPanel: document.querySelector("#ordersPanel"),
+  shippingServicesPanel: document.querySelector("#shippingServicesPanel"),
   addProductButton: document.querySelector("#addProductButton"),
   refreshButton: document.querySelector("#refreshButton"),
   searchInput: document.querySelector("#searchInput"),
@@ -184,6 +187,7 @@ function showLogin(message = "") {
   clearPhotoPreviews();
   els.dashboardView.hidden = true;
   els.editor.hidden = true;
+  els.shippingServicesPanel.hidden = true;
   els.loginView.hidden = false;
   showMessage(els.loginMessage, message, message ? "error" : "");
   els.password.focus();
@@ -192,6 +196,9 @@ function showLogin(message = "") {
 function showDashboard() {
   els.loginView.hidden = true;
   els.dashboardView.hidden = false;
+  els.productsWorkspace.hidden = false;
+  els.ordersPanel.hidden = true;
+  els.shippingServicesPanel.hidden = true;
   showMessage(els.loginMessage, "");
 }
 

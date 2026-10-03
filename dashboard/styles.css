@@ -397,6 +397,27 @@ textarea { resize: vertical; }
 .shipping-fields.three-column { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .shipping-profile-actions { padding-top: 2px; }
 
+.shipping-services-list { display: grid; gap: 16px; }
+.shipping-service-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: 0 8px 28px rgba(45, 74, 57, 0.06);
+}
+.shipping-service-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.shipping-service-card-heading h3 { margin: 0; }
+.shipping-service-card > p { margin: 10px 0 16px; overflow-wrap: anywhere; }
+.shipping-service-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.shipping-service-toggle { display: flex; align-items: center; gap: 9px; }
+.shipping-service-toggle input { width: 22px; min-height: 22px; margin: 0; }
+.shipping-service-dirty { color: var(--muted); font-size: 0.86rem; font-weight: 700; }
+
 .operator-section {
   display: grid;
   grid-template-columns: 1fr minmax(120px, 180px) auto;

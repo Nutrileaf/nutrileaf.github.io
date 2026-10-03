@@ -4,6 +4,11 @@ export const APPROVED_PREDEFINED_PACKAGES = Object.freeze([
   'LargeFlatRateBox'
 ]);
 
+export const SHIPPING_SERVICE_DEFINITIONS = Object.freeze([
+  Object.freeze({ service_key: 'usps-ground-advantage', display_name: 'USPS Ground Advantage', carrier: 'USPS', provider_service: 'GroundAdvantage', category: 'ECONOMY', speed_rank: 10 }),
+  Object.freeze({ service_key: 'usps-priority-mail', display_name: 'USPS Priority Mail', carrier: 'USPS', provider_service: 'Priority', category: 'STANDARD', speed_rank: 20 })
+]);
+
 const PACKAGE_SET = new Set(APPROVED_PREDEFINED_PACKAGES);
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -149,4 +154,69 @@ export function createShippingMutationTracker(uuidFactory = () => crypto.randomU
     },
     clear() { pending.clear(); }
   });
+}
+
+function serviceDefinition(serviceKey) {
+  return SHIPPING_SERVICE_DEFINITIONS.find((entry) => entry.service_key === serviceKey) || null;
+}
+
+export function normalizeShippingPolicy(policy) {
+  const definition = serviceDefinition(policy?.service_key);
+  if (!definition || policy.carrier !== definition.carrier ||
+      policy.provider_service !== definition.provider_service || policy.category !== definition.category ||
+      policy.speed_rank !== definition.speed_rank || typeof policy.active !== 'boolean' ||
+      !Number.isSafeInteger(policy.policy_revision) || policy.policy_revision < 0 ||
+      !(policy.updated_at === null || (Number.isSafeInteger(policy.updated_at) && policy.updated_at >= 0))) {
+    throw new Error('Invalid shipping service policy.');
+  }
+  return {
+    service_key: definition.service_key, carrier: definition.carrier,
+    provider_service: definition.provider_service, category: definition.category,
+    speed_rank: definition.speed_rank, active: policy.active,
+    policy_revision: policy.policy_revision, updated_at: policy.updated_at
+  };
+}
+
+export function normalizeShippingPolicies(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
+      !Array.isArray(payload.policies) || payload.policies.length !== SHIPPING_SERVICE_DEFINITIONS.length) {
+    throw new Error('Invalid shipping service policy response.');
+  }
+  const byKey = new Map();
+  for (const input of payload.policies) {
+    const policy = normalizeShippingPolicy(input);
+    if (byKey.has(policy.service_key)) throw new Error('Invalid shipping service policy response.');
+    byKey.set(policy.service_key, policy);
+  }
+  return SHIPPING_SERVICE_DEFINITIONS.map((definition) => {
+    const policy = byKey.get(definition.service_key);
+    if (!policy) throw new Error('Invalid shipping service policy response.');
+    return policy;
+  });
+}
+
+export function shippingPolicyDraft(policy, active) {
+  if (!serviceDefinition(policy?.service_key) || !Number.isSafeInteger(policy.policy_revision) ||
+      policy.policy_revision < 0 || typeof active !== 'boolean') {
+    throw new Error('Invalid shipping service policy change.');
+  }
+  return { expected_policy_revision: policy.policy_revision, active };
+}
+
+export function shippingPolicyIsDirty(policy, active) {
+  if (typeof policy?.active !== 'boolean' || typeof active !== 'boolean') return false;
+  return policy.active !== active;
+}
+
+export function shippingServicesStatus(policies) {
+  if (!Array.isArray(policies) || policies.some((policy) => typeof policy?.active !== 'boolean')) {
+    throw new Error('Invalid shipping service policy state.');
+  }
+  const enabledCount = policies.filter((policy) => policy.active).length;
+  return {
+    enabled_count: enabledCount,
+    message: enabledCount === 0
+      ? 'No shipping services are enabled. New shipping quotes remain unavailable.'
+      : `${enabledCount} shipping ${enabledCount === 1 ? 'service is' : 'services are'} enabled for future quotes.`
+  };
 }

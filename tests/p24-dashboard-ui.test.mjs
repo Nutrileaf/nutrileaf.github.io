@@ -92,7 +92,7 @@ test("dashboard document is buildless, same-origin, accessible, and contains the
 });
 
 test("frontend sources do not contain privileged credential names, persistent token storage, or direct commerce API calls", () => {
-  const sources = ["index.html", "styles.css", "app.js", "model.js", "shipping-management-model.js"].map(dashboardSource).join("\n");
+  const sources = ["index.html", "styles.css", "app.js", "model.js", "shipping-management-model.js", "shipping-services.js"].map(dashboardSource).join("\n");
   for (const forbidden of [
     "NUTRILEAF_TEST_ADMIN_TOKEN",
     "NUTRILEAF_DASHBOARD_TEST_SESSION_SECRET",
