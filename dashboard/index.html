@@ -29,7 +29,7 @@
           <h1>Products</h1>
           <p class="muted">Add products, update details, adjust stock, manage photos, and control store visibility.</p>
         </div>
-        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="shippingServicesTab" type="button">Shipping Services</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
+        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="shippingProfilesTab" type="button">Shipping Profiles</button><button class="pill quiet" id="shippingServicesTab" type="button">Shipping Services</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
       </header>
 
       <div id="productsWorkspace">
@@ -130,10 +130,62 @@
           </div>
         </form>
 
+        <section class="operator-section" id="stockSection" hidden aria-labelledby="stockTitle">
+          <div>
+            <h3 id="stockTitle">Stock</h3>
+            <p>Exact stock: <strong id="stockValue">0</strong></p>
+          </div>
+          <label class="compact-field">Quantity
+            <input id="stockQuantity" type="number" min="1" max="1000000" step="1" value="1" inputmode="numeric">
+          </label>
+          <div class="action-row">
+            <button class="pill success" id="addStockButton" type="button">Add stock</button>
+            <button class="pill warning" id="removeStockButton" type="button">Remove stock</button>
+          </div>
+        </section>
+
+        <section class="operator-section photo-section" id="photoSection" hidden aria-labelledby="photoTitle">
+          <div>
+            <h3 id="photoTitle">Product photo</h3>
+            <p class="muted">JPEG, PNG, or WebP. Maximum 2 MB.</p>
+          </div>
+          <div class="photo-preview-wrap"><img id="photoPreview" alt="Current product photo" hidden></div>
+          <div>
+            <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp">
+            <p class="muted photo-selection-status" id="photoSelectionStatus" aria-live="polite"></p>
+          </div>
+          <div class="action-row">
+            <button class="pill success" id="addPhotoButton" type="button">Add photo</button>
+            <button class="pill quiet" id="replacePhotoButton" type="button">Replace photo</button>
+            <button class="pill warning" id="removePhotoButton" type="button">Remove photo</button>
+          </div>
+        </section>
+      </section>
+      </div>
+      <section id="shippingProfilesPanel" hidden aria-labelledby="shippingProfilesTitle">
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">TEST SHIPPING PROFILES</p>
+            <h2 id="shippingProfilesTitle">Shipping Profiles</h2>
+            <p class="muted">Manage each product's reviewed single-unit shipping weight and package measurements independently from product details and shipping-service policy.</p>
+          </div>
+          <button class="pill quiet" id="shippingProfilesRefresh" type="button">Refresh</button>
+        </header>
+        <p class="message" id="shippingProfilesMessage" role="status" aria-live="polite" hidden></p>
+        <div class="shipping-profiles-layout">
+          <aside class="shipping-profiles-picker" aria-label="Products with shipping profiles">
+            <label class="search-field">
+              <span>Find a product</span>
+              <input id="shippingProfilesSearch" type="search" placeholder="Name or SKU" autocomplete="off" maxlength="100">
+            </label>
+            <p class="counts" id="shippingProfilesCount" aria-live="polite"></p>
+            <div class="shipping-profiles-list" id="shippingProfilesList"></div>
+          </aside>
+          <div class="shipping-profile-workspace">
         <section class="shipping-profile-section" id="shippingProfileSection" hidden aria-labelledby="shippingProfileTitle">
           <div class="shipping-profile-heading">
             <div>
-              <h3 id="shippingProfileTitle">Shipping Profile</h3>
+              <p class="eyebrow">PRODUCT SHIPPING PROFILE</p>\n              <h3 id="shippingProfileTitle">Shipping Profile</h3>\n              <p class="shipping-selected-product"><strong id="shippingProfileProductTitle">Select a product</strong><span id="shippingProfileProductSku"></span></p>
               <p class="muted">Save one reviewed single-unit package profile for future quotes. Configuration does not guarantee an available rate. Multi-product orders and quantities greater than one still require manual package review.</p>
             </div>
             <div class="shipping-profile-state" aria-live="polite">
@@ -202,39 +254,9 @@
             </div>
           </form>
         </section>
-
-        <section class="operator-section" id="stockSection" hidden aria-labelledby="stockTitle">
-          <div>
-            <h3 id="stockTitle">Stock</h3>
-            <p>Exact stock: <strong id="stockValue">0</strong></p>
           </div>
-          <label class="compact-field">Quantity
-            <input id="stockQuantity" type="number" min="1" max="1000000" step="1" value="1" inputmode="numeric">
-          </label>
-          <div class="action-row">
-            <button class="pill success" id="addStockButton" type="button">Add stock</button>
-            <button class="pill warning" id="removeStockButton" type="button">Remove stock</button>
-          </div>
-        </section>
-
-        <section class="operator-section photo-section" id="photoSection" hidden aria-labelledby="photoTitle">
-          <div>
-            <h3 id="photoTitle">Product photo</h3>
-            <p class="muted">JPEG, PNG, or WebP. Maximum 2 MB.</p>
-          </div>
-          <div class="photo-preview-wrap"><img id="photoPreview" alt="Current product photo" hidden></div>
-          <div>
-            <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp">
-            <p class="muted photo-selection-status" id="photoSelectionStatus" aria-live="polite"></p>
-          </div>
-          <div class="action-row">
-            <button class="pill success" id="addPhotoButton" type="button">Add photo</button>
-            <button class="pill quiet" id="replacePhotoButton" type="button">Replace photo</button>
-            <button class="pill warning" id="removePhotoButton" type="button">Remove photo</button>
-          </div>
-        </section>
+        </div>
       </section>
-      </div>
       <section id="shippingServicesPanel" hidden aria-labelledby="shippingServicesTitle">
         <header class="dashboard-header">
           <div>
