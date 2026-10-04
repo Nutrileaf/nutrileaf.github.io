@@ -13,7 +13,7 @@
       <div class="brand-mark" aria-hidden="true">NL</div>
       <p class="eyebrow">TEST PRODUCT DASHBOARD</p>
       <h1 id="loginTitle">NutriLeaf Products</h1>
-      <p class="muted">Sign in to manage TEST products. This dashboard does not process payments or shipping.</p>
+      <p class="muted">Sign in to manage TEST products. This dashboard does not process payments or purchase shipping labels.</p>
       <form id="loginForm" class="stack">
         <label for="password">Dashboard password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="512">
@@ -29,7 +29,7 @@
           <h1>Products</h1>
           <p class="muted">Add products, update details, adjust stock, manage photos, and control store visibility.</p>
         </div>
-        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
+        <div class="action-row" aria-label="Dashboard sections"><button class="pill quiet" id="productsTab" type="button">Products</button><button class="pill quiet" id="shippingProfilesTab" type="button">Shipping Profiles</button><button class="pill quiet" id="shippingServicesTab" type="button">Shipping Services</button><button class="pill quiet" id="ordersTab" type="button">Orders</button><button class="pill quiet" id="logoutButton" type="button">Log out</button></div>
       </header>
 
       <div id="productsWorkspace">
@@ -162,6 +162,117 @@
         </section>
       </section>
       </div>
+      <section id="shippingProfilesPanel" hidden aria-labelledby="shippingProfilesTitle">
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">TEST SHIPPING PROFILES</p>
+            <h2 id="shippingProfilesTitle">Shipping Profiles</h2>
+            <p class="muted">Manage each product's reviewed single-unit shipping weight and package measurements independently from product details and shipping-service policy.</p>
+          </div>
+          <button class="pill quiet" id="shippingProfilesRefresh" type="button">Refresh</button>
+        </header>
+        <p class="message" id="shippingProfilesMessage" role="status" aria-live="polite" hidden></p>
+        <div class="shipping-profiles-layout">
+          <aside class="shipping-profiles-picker" aria-label="Products with shipping profiles">
+            <label class="search-field">
+              <span>Find a product</span>
+              <input id="shippingProfilesSearch" type="search" placeholder="Name or SKU" autocomplete="off" maxlength="100">
+            </label>
+            <p class="counts" id="shippingProfilesCount" aria-live="polite"></p>
+            <div class="shipping-profiles-list" id="shippingProfilesList"></div>
+          </aside>
+          <div class="shipping-profile-workspace">
+        <section class="shipping-profile-section" id="shippingProfileSection" hidden aria-labelledby="shippingProfileTitle">
+          <div class="shipping-profile-heading">
+            <div>
+              <p class="eyebrow">PRODUCT SHIPPING PROFILE</p>\n              <h3 id="shippingProfileTitle">Shipping Profile</h3>\n              <p class="shipping-selected-product"><strong id="shippingProfileProductTitle">Select a product</strong><span id="shippingProfileProductSku"></span></p>
+              <p class="muted">Save one reviewed single-unit package profile for future quotes. Configuration does not guarantee an available rate. Multi-product orders and quantities greater than one still require manual package review.</p>
+            </div>
+            <div class="shipping-profile-state" aria-live="polite">
+              <strong id="shippingReadiness">Loading…</strong>
+              <span id="shippingVersion">Version —</span>
+              <span class="unsaved-indicator" id="shippingDirtyIndicator" hidden>Unsaved shipping changes</span>
+            </div>
+          </div>
+
+          <div class="warning-card shipping-inactive-warning" id="shippingInactiveWarning" role="status" hidden>
+            <strong>Not configured — values inactive</strong>
+            <p>Saved measurements remain visible, but they are not used for shipping rates. Review and save explicitly to configure this profile again.</p>
+          </div>
+          <p class="message" id="shippingProfileMessage" role="status" aria-live="polite" hidden></p>
+
+          <form id="shippingProfileForm" class="shipping-profile-form">
+            <label for="shippingPackageMethod">Package method</label>
+            <select id="shippingPackageMethod" required>
+              <option value="">Choose a package method</option>
+              <option value="CUSTOM">Custom dimensions</option>
+              <option value="PREDEFINED">Approved predefined package</option>
+            </select>
+
+            <fieldset class="shipping-fieldset">
+              <legend>Single-unit weight</legend>
+              <div class="shipping-fields two-column">
+                <label for="shippingPounds">Pounds
+                  <input id="shippingPounds" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="0">
+                </label>
+                <label for="shippingOunces">Ounces
+                  <input id="shippingOunces" inputmode="decimal" autocomplete="off" maxlength="4" placeholder="0.0">
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="shipping-fieldset" id="shippingCustomFields" hidden>
+              <legend>Custom dimensions in inches</legend>
+              <div class="shipping-fields three-column">
+                <label for="shippingLength">Length
+                  <input id="shippingLength" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.0">
+                </label>
+                <label for="shippingWidth">Width
+                  <input id="shippingWidth" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.0">
+                </label>
+                <label for="shippingHeight">Height
+                  <input id="shippingHeight" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.0">
+                </label>
+              </div>
+            </fieldset>
+
+            <div id="shippingPredefinedFields" hidden>
+              <label for="shippingPredefinedPackage">USPS Priority Mail Flat Rate package
+                <select id="shippingPredefinedPackage">
+                  <option value="">Choose the physical USPS package</option>
+                  <option value="SmallFlatRateBox">Small Flat Rate Box</option>
+                  <option value="MediumFlatRateBox">Medium Flat Rate Box</option>
+                  <option value="LargeFlatRateBox">Large Flat Rate Box</option>
+                </select>
+              </label>
+              <p class="muted">Select one only when the product will actually ship in that USPS Priority Mail Flat Rate package.</p>
+            </div>
+
+            <div class="action-row shipping-profile-actions">
+              <button class="pill primary" id="saveShippingProfileButton" type="submit">Save shipping profile</button>
+              <button class="pill warning" id="deactivateShippingProfileButton" type="button">Mark not configured</button>
+            </div>
+          </form>
+        </section>
+          </div>
+        </div>
+      </section>
+      <section id="shippingServicesPanel" hidden aria-labelledby="shippingServicesTitle">
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">TEST SHIPPING POLICY</p>
+            <h2 id="shippingServicesTitle">Shipping Services</h2>
+            <p class="muted">Enable only reviewed services for future quotes. Disabling every service is a valid fail-closed state.</p>
+          </div>
+          <button class="pill quiet" id="shippingServicesRefresh" type="button">Refresh</button>
+        </header>
+        <div class="warning-card" id="shippingServicesWarning" role="status" aria-live="polite" hidden>
+          <strong>No shipping services enabled</strong>
+          <p>New shipping quotes remain unavailable until an approved service is deliberately enabled.</p>
+        </div>
+        <p class="message" id="shippingServicesMessage" role="status" aria-live="polite" hidden></p>
+        <div class="shipping-services-list" id="shippingServicesList" aria-label="Application-approved shipping services"></div>
+      </section>
       <section id="ordersPanel" hidden aria-labelledby="ordersTitle">
         <header class="dashboard-header"><div><p class="eyebrow">TEST ORDER DASHBOARD</p><h2 id="ordersTitle">Orders</h2><p class="muted">Review existing order, payment, customer, and shipping information. No order changes are available here.</p></div><button class="pill quiet" id="ordersRefresh" type="button">Refresh</button></header>
         <section class="warning-card" id="operationsReadiness" role="status" aria-live="polite" hidden>
@@ -195,5 +306,6 @@
   <script type="module" src="./app.js"></script>
   <script type="module" src="./orders.js"></script>
   <script type="module" src="./incidents.js"></script>
+  <script type="module" src="./shipping-services.js"></script>
 </body>
 </html>

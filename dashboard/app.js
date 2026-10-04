@@ -12,6 +12,14 @@ import {
   requiresStockRemovalConfirmation,
   startingStockFromInput
 } from "./model.js";
+import {
+  createShippingMutationTracker,
+  shippingPackageFieldVisibility,
+  shippingProfileDisplayState,
+  shippingFormFromProfile,
+  shippingProfileDraft,
+  shippingProfileIsDirty
+} from "./shipping-management-model.js";
 
 const els = {
   loginView: document.querySelector("#loginView"),
@@ -20,6 +28,21 @@ const els = {
   password: document.querySelector("#password"),
   loginMessage: document.querySelector("#loginMessage"),
   logoutButton: document.querySelector("#logoutButton"),
+  productsWorkspace: document.querySelector("#productsWorkspace"),
+  ordersPanel: document.querySelector("#ordersPanel"),
+  shippingServicesPanel: document.querySelector("#shippingServicesPanel"),
+  shippingProfilesPanel: document.querySelector("#shippingProfilesPanel"),
+  productsTab: document.querySelector("#productsTab"),
+  shippingProfilesTab: document.querySelector("#shippingProfilesTab"),
+  shippingServicesTab: document.querySelector("#shippingServicesTab"),
+  ordersTab: document.querySelector("#ordersTab"),
+  shippingProfilesSearch: document.querySelector("#shippingProfilesSearch"),
+  shippingProfilesRefresh: document.querySelector("#shippingProfilesRefresh"),
+  shippingProfilesList: document.querySelector("#shippingProfilesList"),
+  shippingProfilesCount: document.querySelector("#shippingProfilesCount"),
+  shippingProfilesMessage: document.querySelector("#shippingProfilesMessage"),
+  shippingProfileProductTitle: document.querySelector("#shippingProfileProductTitle"),
+  shippingProfileProductSku: document.querySelector("#shippingProfileProductSku"),
   addProductButton: document.querySelector("#addProductButton"),
   refreshButton: document.querySelector("#refreshButton"),
   searchInput: document.querySelector("#searchInput"),
@@ -66,7 +89,25 @@ const els = {
   photoSelectionStatus: document.querySelector("#photoSelectionStatus"),
   addPhotoButton: document.querySelector("#addPhotoButton"),
   replacePhotoButton: document.querySelector("#replacePhotoButton"),
-  removePhotoButton: document.querySelector("#removePhotoButton")
+  removePhotoButton: document.querySelector("#removePhotoButton"),
+  shippingProfileSection: document.querySelector("#shippingProfileSection"),
+  shippingReadiness: document.querySelector("#shippingReadiness"),
+  shippingVersion: document.querySelector("#shippingVersion"),
+  shippingDirtyIndicator: document.querySelector("#shippingDirtyIndicator"),
+  shippingInactiveWarning: document.querySelector("#shippingInactiveWarning"),
+  shippingProfileMessage: document.querySelector("#shippingProfileMessage"),
+  shippingProfileForm: document.querySelector("#shippingProfileForm"),
+  shippingPackageMethod: document.querySelector("#shippingPackageMethod"),
+  shippingPounds: document.querySelector("#shippingPounds"),
+  shippingOunces: document.querySelector("#shippingOunces"),
+  shippingCustomFields: document.querySelector("#shippingCustomFields"),
+  shippingLength: document.querySelector("#shippingLength"),
+  shippingWidth: document.querySelector("#shippingWidth"),
+  shippingHeight: document.querySelector("#shippingHeight"),
+  shippingPredefinedFields: document.querySelector("#shippingPredefinedFields"),
+  shippingPredefinedPackage: document.querySelector("#shippingPredefinedPackage"),
+  saveShippingProfileButton: document.querySelector("#saveShippingProfileButton"),
+  deactivateShippingProfileButton: document.querySelector("#deactivateShippingProfileButton")
 };
 
 const state = {
@@ -78,6 +119,11 @@ const state = {
   retryIds: new Map(),
   searchTimer: null,
   editorBaseline: null,
+  shippingProducts: [],
+  shippingSelected: null,
+  shippingProfile: null,
+  shippingBaseline: null,
+  shippingMutationTracker: createShippingMutationTracker(),
   editPhotoPreviewUrl: null,
   startingPhotoPreviewUrl: null
 };
@@ -121,7 +167,9 @@ function friendlyError(payload, fallback = "That change could not be completed."
     CSRF_REJECTED: "Your session needs to be refreshed. Sign in again.",
     TOO_MANY_LOGIN_ATTEMPTS: "Too many login attempts. Try again shortly.",
     INVALID_LOGIN: "The dashboard password was not accepted.",
-    UPSTREAM_UNAVAILABLE: "The product service is temporarily unavailable. Try again."
+    UPSTREAM_UNAVAILABLE: "The product service is temporarily unavailable. Try again.",
+    SHIPPING_PROFILE_CONFLICT: "The shipping profile changed in another session. Refresh, review the latest version, and save again.",
+    SHIPPING_OPERATION_IN_PROGRESS: "That shipping change is still being reconciled. Retry the same change."
   };
   return messages[code] || payload?.error?.message || fallback;
 }
@@ -147,10 +195,17 @@ function showLogin(message = "") {
   state.products = [];
   state.selected = null;
   state.editorBaseline = null;
+  state.shippingProducts = [];
+  state.shippingSelected = null;
+  state.shippingProfile = null;
+  state.shippingBaseline = null;
+  state.shippingMutationTracker.clear();
   state.retryIds.clear();
   clearPhotoPreviews();
   els.dashboardView.hidden = true;
   els.editor.hidden = true;
+  els.shippingServicesPanel.hidden = true;
+  els.shippingProfilesPanel.hidden = true;
   els.loginView.hidden = false;
   showMessage(els.loginMessage, message, message ? "error" : "");
   els.password.focus();
@@ -159,6 +214,10 @@ function showLogin(message = "") {
 function showDashboard() {
   els.loginView.hidden = true;
   els.dashboardView.hidden = false;
+  els.productsWorkspace.hidden = false;
+  els.ordersPanel.hidden = true;
+  els.shippingServicesPanel.hidden = true;
+  els.shippingProfilesPanel.hidden = true;
   showMessage(els.loginMessage, "");
 }
 
@@ -215,6 +274,31 @@ async function mutateBinary(key, path, method, file = null) {
   }
   if (!response.ok) throw Object.assign(new Error(friendlyError(payload)), { payload });
   completeRetry(key);
+  return payload;
+}
+
+async function mutateShippingJson(key, path, method, body) {
+  const clientMutationId = state.shippingMutationTracker.idFor(key);
+  let response;
+  try {
+    response = await fetch(path, {
+      method,
+      credentials: "same-origin",
+      headers: { "X-CSRF-Token": state.csrf, "Content-Type": "application/json" },
+      body: JSON.stringify({ client_mutation_id: clientMutationId, ...body })
+    });
+  } catch {
+    state.shippingMutationTracker.settle(key, "AMBIGUOUS");
+    throw new Error("The shipping change outcome is unknown. Retry the same change before editing it.");
+  }
+  const payload = await responsePayload(response);
+  const ambiguous = response.status >= 500 || payload?.error?.code === "SHIPPING_OPERATION_IN_PROGRESS";
+  state.shippingMutationTracker.settle(key, ambiguous ? "AMBIGUOUS" : "DEFINITE");
+  if (response.status === 401 || response.status === 403) {
+    showLogin(friendlyError(payload, "Your session expired. Sign in again."));
+    throw new Error("SESSION_EXPIRED");
+  }
+  if (!response.ok) throw Object.assign(new Error(friendlyError(payload, "Shipping profile could not be saved.")), { payload });
   return payload;
 }
 
@@ -348,15 +432,251 @@ function updateProductState(product) {
   const index = state.products.findIndex((item) => item.id === product.id);
   if (index >= 0) state.products[index] = product;
   else state.products.unshift(product);
+  const shippingIndex = state.shippingProducts.findIndex((entry) => entry.product.id === product.id);
+  if (shippingIndex >= 0) state.shippingProducts[shippingIndex] = { ...state.shippingProducts[shippingIndex], product };
+  if (state.shippingSelected?.id === product.id) {
+    state.shippingSelected = product;
+    els.shippingProfileProductTitle.textContent = product.name || "Unnamed product";
+    els.shippingProfileProductSku.textContent = product.sku ? `SKU: ${product.sku}` : "SKU unavailable";
+    renderShippingProfiles();
+  }
   state.selected = product;
   renderProducts();
   populateEditor(product);
+}
+function showShippingProfilesMessage(text, kind = "") {
+  showMessage(els.shippingProfilesMessage, text, kind);
+}
+
+function shippingProfileStatus(profile) {
+  if (profile?.configuration_error) return { label: "Needs repair", className: "needs-attention" };
+  if (profile?.readiness_status === "CONFIGURED") return { label: "Configured", className: "in-stock" };
+  return { label: "Not configured", className: "hidden" };
+}
+
+function filteredShippingProducts() {
+  const term = els.shippingProfilesSearch.value.trim().toLowerCase();
+  if (!term) return state.shippingProducts;
+  return state.shippingProducts.filter(({ product }) =>
+    String(product.name || "").toLowerCase().includes(term) ||
+    String(product.sku || "").toLowerCase().includes(term)
+  );
+}
+
+function renderShippingProfiles() {
+  const entries = filteredShippingProducts();
+  els.shippingProfilesList.replaceChildren();
+  for (const entry of entries) {
+    const { product, profile } = entry;
+    const status = shippingProfileStatus(profile);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "shipping-profile-product-card";
+    if (state.shippingSelected?.id === product.id) button.classList.add("selected");
+    button.dataset.productId = product.id;
+
+    const text = document.createElement("span");
+    text.className = "shipping-profile-product-copy";
+    const name = document.createElement("strong");
+    name.textContent = product.name || "Unnamed product";
+    const meta = document.createElement("span");
+    meta.textContent = product.sku || "SKU unavailable";
+    text.append(name, meta);
+
+    const chip = document.createElement("span");
+    chip.className = `status-chip ${status.className}`;
+    chip.textContent = status.label;
+    button.append(text, chip);
+    button.addEventListener("click", () => selectShippingProduct(entry));
+    els.shippingProfilesList.append(button);
+  }
+
+  const configured = state.shippingProducts.filter(({ profile }) =>
+    profile?.readiness_status === "CONFIGURED" && !profile?.configuration_error
+  ).length;
+  els.shippingProfilesCount.textContent =
+    `${configured} configured · ${state.shippingProducts.length - configured} not configured · ${state.shippingProducts.length} total`;
+
+  if (entries.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "No products match this search.";
+    els.shippingProfilesList.append(empty);
+  }
+}
+
+function updateShippingProfileCache(profile) {
+  if (!state.shippingSelected || !profile) return;
+  const index = state.shippingProducts.findIndex((entry) => entry.product.id === state.shippingSelected.id);
+  if (index >= 0) state.shippingProducts[index] = { ...state.shippingProducts[index], profile };
+  if (els.shippingProfilesList) renderShippingProfiles();
+}
+
+async function readShippingProfile(productId) {
+  const response = await fetch(`/api/products/${encodeURIComponent(productId)}/shipping-profile`, {
+    method: "GET", credentials: "same-origin"
+  });
+  const payload = await responsePayload(response);
+  if (response.status === 401 || response.status === 403) {
+    showLogin("Your session expired. Sign in again.");
+    throw new Error("SESSION_EXPIRED");
+  }
+  if (!response.ok) throw new Error(friendlyError(payload, "Shipping profile could not be loaded."));
+  return payload;
+}
+
+async function selectShippingProduct(entry, { force = false } = {}) {
+  if (!entry?.product) return;
+  if (!force && shippingEditorIsDirty() &&
+      !confirm("Discard unsaved shipping-profile changes and select another product?")) return;
+  state.shippingSelected = entry.product;
+  els.shippingProfileProductTitle.textContent = entry.product.name || "Unnamed product";
+  els.shippingProfileProductSku.textContent = entry.product.sku ? `SKU: ${entry.product.sku}` : "SKU unavailable";
+  resetShippingProfileSection(true);
+  renderShippingProfiles();
+  if (entry.profile) {
+    populateShippingProfile(entry.profile);
+    return;
+  }
+  await loadShippingProfile(entry.product.id);
+}
+
+async function loadShippingProfiles({ preserveSelection = true } = {}) {
+  showShippingProfilesMessage("Loading shipping profiles…");
+  const previousId = preserveSelection ? state.shippingSelected?.id : null;
+  try {
+    const response = await fetch("/api/products?limit=50", { credentials: "same-origin" });
+    const body = await responsePayload(response);
+    if (response.status === 401 || response.status === 403) {
+      showLogin("Your session expired. Sign in again.");
+      return;
+    }
+    if (!response.ok) throw new Error(friendlyError(body, "Products could not be loaded."));
+    const products = Array.isArray(body?.products) ? body.products.filter(allowedProduct) : [];
+    const profiles = await Promise.all(products.map(async (product) => ({
+      product,
+      profile: await readShippingProfile(product.id)
+    })));
+    state.shippingProducts = profiles;
+    renderShippingProfiles();
+    showShippingProfilesMessage("");
+
+    const selected = profiles.find((entry) => entry.product.id === previousId) || profiles[0] || null;
+    if (selected) await selectShippingProduct(selected, { force: true });
+    else {
+      state.shippingSelected = null;
+      resetShippingProfileSection(false);
+    }
+  } catch (error) {
+    if (error.message === "SESSION_EXPIRED") return;
+    showShippingProfilesMessage(error.message || "Shipping profiles could not be loaded.", "error");
+  }
 }
 
 function setEditorWarning(product) {
   const warning = product ? readinessGuidance(product) : null;
   els.readinessWarning.hidden = !warning;
   els.readinessText.textContent = warning || "";
+}
+
+function showShippingMessage(text, kind = "") {
+  showMessage(els.shippingProfileMessage, text, kind);
+}
+
+function shippingFormValues() {
+  return {
+    package_method: els.shippingPackageMethod.value,
+    pounds: els.shippingPounds.value,
+    ounces: els.shippingOunces.value,
+    length: els.shippingLength.value,
+    width: els.shippingWidth.value,
+    height: els.shippingHeight.value,
+    predefined_package: els.shippingPredefinedPackage.value
+  };
+}
+
+function shippingEditorIsDirty() {
+  return !els.shippingProfilesPanel.hidden && !els.shippingProfileSection.hidden && state.shippingBaseline &&
+    shippingProfileIsDirty(state.shippingBaseline, shippingFormValues());
+}
+
+function updateShippingDirtyIndicator() {
+  const dirty = Boolean(shippingEditorIsDirty());
+  els.shippingDirtyIndicator.hidden = !dirty;
+  return dirty;
+}
+
+function updateShippingPackageFields() {
+  const visibility = shippingPackageFieldVisibility(els.shippingPackageMethod.value);
+  els.shippingCustomFields.hidden = !visibility.custom;
+  els.shippingPredefinedFields.hidden = !visibility.predefined;
+  updateShippingDirtyIndicator();
+}
+
+function populateShippingProfile(profile) {
+  const form = shippingFormFromProfile(profile);
+  updateShippingProfileCache(profile);
+  const displayState = shippingProfileDisplayState(profile);
+  state.shippingProfile = profile;
+  els.shippingPackageMethod.value = form.package_method;
+  els.shippingPounds.value = form.pounds;
+  els.shippingOunces.value = form.ounces;
+  els.shippingLength.value = form.length;
+  els.shippingWidth.value = form.width;
+  els.shippingHeight.value = form.height;
+  els.shippingPredefinedPackage.value = form.predefined_package;
+  els.shippingReadiness.textContent = displayState.label;
+  els.shippingVersion.textContent = `Version ${profile.version}`;
+  els.shippingInactiveWarning.hidden = profile.readiness_status !== "UNCONFIGURED";
+  els.deactivateShippingProfileButton.disabled = profile.readiness_status === "UNCONFIGURED";
+  els.saveShippingProfileButton.disabled = false;
+  state.shippingBaseline = shippingFormValues();
+  updateShippingPackageFields();
+  updateShippingDirtyIndicator();
+  if (profile.configuration_error) {
+    showShippingMessage("Stored package information is invalid. Review every shipping field and save a corrected profile.", "error");
+  } else {
+    showShippingMessage("");
+  }
+}
+
+function resetShippingProfileSection(editing) {
+  state.shippingProfile = null;
+  state.shippingBaseline = null;
+  els.shippingProfileForm.reset();
+  els.shippingCustomFields.hidden = true;
+  els.shippingPredefinedFields.hidden = true;
+  els.shippingDirtyIndicator.hidden = true;
+  els.shippingInactiveWarning.hidden = true;
+  els.shippingProfileSection.hidden = !editing;
+  if (!editing) {
+    els.shippingProfileProductTitle.textContent = "Select a product";
+    els.shippingProfileProductSku.textContent = "";
+  }
+  els.shippingReadiness.textContent = editing ? "Loading…" : "Select a product to manage its shipping profile";
+  els.shippingVersion.textContent = "Version —";
+  els.saveShippingProfileButton.disabled = editing;
+  els.deactivateShippingProfileButton.disabled = true;
+  showShippingMessage(editing ? "Loading shipping profile…" : "");
+}
+
+async function loadShippingProfile(productId) {
+  try {
+    const response = await fetch(`/api/products/${encodeURIComponent(productId)}/shipping-profile`, {
+      method: "GET", credentials: "same-origin"
+    });
+    const payload = await responsePayload(response);
+    if (response.status === 401 || response.status === 403) return showLogin("Your session expired. Sign in again.");
+    if (!response.ok) throw new Error(friendlyError(payload, "Shipping profile could not be loaded."));
+    if (state.shippingSelected?.id !== productId) return;
+    populateShippingProfile(payload);
+  } catch (error) {
+    if (state.shippingSelected?.id !== productId) return;
+    els.shippingReadiness.textContent = "Unavailable";
+    els.saveShippingProfileButton.disabled = true;
+    els.deactivateShippingProfileButton.disabled = true;
+    showShippingMessage(error.message || "Shipping profile could not be loaded.", "error");
+  }
 }
 
 function editorValues() {
@@ -368,12 +688,16 @@ function editorValues() {
   };
 }
 
-function editorIsDirty() {
+function productEditorIsDirty() {
   return !els.editor.hidden && state.editorBaseline && hasUnsavedProductChanges(state.editorBaseline, editorValues());
 }
 
+function editorIsDirty() {
+  return Boolean(productEditorIsDirty() || shippingEditorIsDirty());
+}
+
 function updateUnsavedIndicator() {
-  const dirty = Boolean(editorIsDirty());
+  const dirty = Boolean(productEditorIsDirty());
   els.unsavedIndicator.hidden = !dirty;
   return dirty;
 }
@@ -445,11 +769,11 @@ function populateEditor(product) {
 
 function confirmDiscardChanges() {
   if (!editorIsDirty()) return true;
-  return confirm("Cancel and discard unsaved product changes?");
+  return confirm("Cancel and discard unsaved product or shipping changes?");
 }
 
 function ensureNoUnsavedDetails(action) {
-  if (!editorIsDirty()) return true;
+  if (!productEditorIsDirty()) return true;
   showEditorMessage(`Save or Cancel your product detail changes before ${action}.`, "error");
   return false;
 }
@@ -562,6 +886,61 @@ async function saveProduct(event) {
       showEditorMessage(message, "error");
       showMessage(els.pageMessage, message, "error");
     }
+  }
+}
+
+async function saveShippingProfile(event) {
+  event.preventDefault();
+  if (!state.shippingSelected || !state.shippingProfile) return;
+  try {
+    const draft = shippingProfileDraft(shippingFormValues(), state.shippingProfile.version);
+    const key = `shipping-profile:${state.shippingSelected.id}:${JSON.stringify(draft)}`;
+    const result = await mutateShippingJson(
+      key,
+      `/api/products/${encodeURIComponent(state.shippingSelected.id)}/shipping-profile`,
+      "PUT",
+      draft
+    );
+    populateShippingProfile(result);
+    showShippingMessage("Shipping profile configured for future quotes.", "success");
+  } catch (error) {
+    if (error.message === "SESSION_EXPIRED") return;
+    if (error.payload?.error?.code === "SHIPPING_PROFILE_CONFLICT") {
+      if (error.payload.current) populateShippingProfile(error.payload.current);
+      else await loadShippingProfile(state.shippingSelected.id);
+      showShippingMessage("The shipping profile changed in another session. The latest version is shown; review every value before saving again.", "error");
+      return;
+    }
+    showShippingMessage(error.message, "error");
+  }
+}
+
+async function deactivateShippingProfile() {
+  if (!state.shippingSelected || !state.shippingProfile || state.shippingProfile.readiness_status === "UNCONFIGURED") return;
+  const prompt = shippingEditorIsDirty()
+    ? "Discard unsaved shipping edits and mark the saved profile not configured? Saved values will remain inactive for later review."
+    : "Mark this shipping profile not configured? Saved values will remain inactive for later review.";
+  if (!confirm(prompt)) return;
+  const body = { expected_version: state.shippingProfile.version };
+  const key = `shipping-profile-deactivate:${state.shippingSelected.id}:${JSON.stringify(body)}`;
+  try {
+    const result = await mutateShippingJson(
+      key,
+      `/api/products/${encodeURIComponent(state.shippingSelected.id)}/shipping-profile/deactivate`,
+      "POST",
+      body
+    );
+    populateShippingProfile(result);
+    showShippingMessage("Shipping profile marked not configured. Saved values remain inactive.", "success");
+  } catch (error) {
+    if (error.message === "SESSION_EXPIRED") return;
+    if (error.payload?.error?.code === "SHIPPING_PROFILE_CONFLICT") {
+      if (error.payload.current) populateShippingProfile(error.payload.current);
+      else await loadShippingProfile(state.shippingSelected.id);
+      showShippingMessage("The shipping profile changed in another session. The latest version is shown; review it before trying again.", "error");
+      return;
+    }
+    showShippingMessage(error.message, "error");
   }
 }
 
@@ -763,6 +1142,41 @@ function clearFilters() {
   loadProducts();
 }
 
+function leaveShippingProfiles(event) {
+  if (els.shippingProfilesPanel.hidden) return true;
+  if (shippingEditorIsDirty() &&
+      !confirm("Discard unsaved shipping-profile changes and leave Shipping Profiles?")) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return false;
+  }
+  els.shippingProfilesPanel.hidden = true;
+  return true;
+}
+
+els.shippingProfilesTab.addEventListener("click", async (event) => {
+  if (productEditorIsDirty() && !confirm("Discard unsaved product changes and open Shipping Profiles?")) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
+  }
+  els.productsWorkspace.hidden = true;
+  els.ordersPanel.hidden = true;
+  els.shippingServicesPanel.hidden = true;
+  els.shippingProfilesPanel.hidden = false;
+  if (state.shippingProducts.length === 0) await loadShippingProfiles();
+  else renderShippingProfiles();
+});
+for (const tab of [els.productsTab, els.shippingServicesTab, els.ordersTab]) {
+  tab.addEventListener("click", leaveShippingProfiles);
+}
+els.shippingProfilesRefresh.addEventListener("click", async () => {
+  if (shippingEditorIsDirty() &&
+      !confirm("Discard unsaved shipping-profile changes and refresh all shipping profiles?")) return;
+  await loadShippingProfiles();
+});
+els.shippingProfilesSearch.addEventListener("input", renderShippingProfiles);
+
 els.loginForm.addEventListener("submit", login);
 els.logoutButton.addEventListener("click", logout);
 els.addProductButton.addEventListener("click", () => openEditor());
@@ -778,6 +1192,9 @@ els.removeStockButton.addEventListener("click", () => adjustStock("REMOVE"));
 els.addPhotoButton.addEventListener("click", uploadPhoto);
 els.replacePhotoButton.addEventListener("click", uploadPhoto);
 els.removePhotoButton.addEventListener("click", removePhoto);
+els.shippingProfileForm.addEventListener("submit", saveShippingProfile);
+els.deactivateShippingProfileButton.addEventListener("click", deactivateShippingProfile);
+els.shippingPackageMethod.addEventListener("change", updateShippingPackageFields);
 els.photoInput.addEventListener("change", previewEditPhoto);
 els.startingPhoto.addEventListener("change", previewStartingPhoto);
 els.clearWarningButton.addEventListener("click", () => { els.readinessWarning.hidden = true; });
@@ -789,6 +1206,13 @@ els.clearFiltersButton.addEventListener("click", clearFilters);
 for (const input of [els.productName, els.productType, els.productDescription, els.productPrice]) {
   input.addEventListener("input", updateUnsavedIndicator);
   input.addEventListener("change", updateUnsavedIndicator);
+}
+for (const input of [
+  els.shippingPounds, els.shippingOunces, els.shippingLength, els.shippingWidth,
+  els.shippingHeight, els.shippingPredefinedPackage
+]) {
+  input.addEventListener("input", updateShippingDirtyIndicator);
+  input.addEventListener("change", updateShippingDirtyIndicator);
 }
 window.addEventListener("beforeunload", (event) => {
   if (!editorIsDirty()) return;
