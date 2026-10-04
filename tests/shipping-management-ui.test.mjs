@@ -132,7 +132,7 @@ test('shipping editor DOM is accessible, explicit, and has no destructive clear 
 
 test('shipping save path remains separate from product detail mutation fields', () => {
   const app = readFileSync(new URL('../dashboard/app.js', import.meta.url), 'utf8');
-  assert.match(app, /\/api\/products\/\$\{encodeURIComponent\(state\.selected\.id\)\}\/shipping-profile/);
+  assert.match(app, /\/api\/products\/\$\{encodeURIComponent\(state\.shippingSelected\.id\)\}\/shipping-profile/);
   assert.match(app, /client_mutation_id/);
   const shippingFunction = app.match(/async function saveShippingProfile[\s\S]*?\n}\n/);
   assert.ok(shippingFunction);
