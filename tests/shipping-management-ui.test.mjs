@@ -186,3 +186,33 @@ test('shipping services page has fixed controls, revision evidence, and no free-
   assert.doesNotMatch(html, /<input[^>]+(?:carrier|provider_service|category|speed_rank|service_key)/i);
   assert.doesNotMatch(html, /<textarea[^>]+(?:carrier|service)/i);
 });
+
+
+test('shipping profiles have a dedicated top-level dashboard workspace', () => {
+  const html = readFileSync(new URL('../dashboard/index.html', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../dashboard/app.js', import.meta.url), 'utf8');
+  for (const id of [
+    'shippingProfilesTab', 'shippingProfilesPanel', 'shippingProfilesList',
+    'shippingProfilesSearch', 'shippingProfilesRefresh', 'shippingProfileProductTitle',
+    'shippingProfileProductSku'
+  ]) assert.match(html, new RegExp(`id=["']${id}["']`), id);
+  assert.match(html, /Products[\s\S]*Shipping Profiles[\s\S]*Shipping Services[\s\S]*Orders/);
+  const editorStart = html.indexOf('id="editor"');
+  const profilesStart = html.indexOf('id="shippingProfilesPanel"');
+  assert.ok(editorStart >= 0 && profilesStart > editorStart);
+  assert.doesNotMatch(html.slice(editorStart, profilesStart), /id=["']shippingProfileSection["']/);
+  assert.match(html.slice(profilesStart), /id=["']shippingProfileSection["']/);
+  assert.match(app, /shippingSelected/);
+  assert.match(app, /loadShippingProfiles/);
+  assert.match(app, /shippingProfilesTab/);
+});
+
+test('shipping profile workspace keeps product mutations separate from shipping measurements', () => {
+  const app = readFileSync(new URL('../dashboard/app.js', import.meta.url), 'utf8');
+  const save = app.match(/async function saveShippingProfile[\s\S]*?\n}\n/);
+  assert.ok(save);
+  assert.match(save[0], /state\.shippingSelected\.id/);
+  for (const forbidden of ['visible_in_store', 'price_cents', 'available_stock', 'product_type', 'photo']) {
+    assert.equal(save[0].includes(forbidden), false, forbidden);
+  }
+});
