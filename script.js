@@ -1,4 +1,4 @@
-import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, validateCheckoutRequest, createShippingRateRequest, selectedShippingRate, prepareCheckoutAttempt, readCheckoutAttempt, readCheckoutHold, saveCheckoutAttempt, clearLegacyPersonalCheckoutState } from "./checkout-state.js";
+import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, validateCheckoutRequest, createShippingRateRequest, selectedShippingRate, prepareCheckoutAttempt, readCheckoutAttempt, readCheckoutHold, saveCheckoutAttempt, clearRejectedCheckoutAttempt, clearLegacyPersonalCheckoutState } from "./checkout-state.js";
 import { submitCheckout, getShippingRates } from "./checkout-submit.js";
 import { createPaymentController } from "./payment-initiation.js";
 import { trackAddToCart, trackBeginCheckout } from "./analytics.js";
@@ -90,7 +90,13 @@ if(commerceReady){
  }catch{checkoutStorageError=true}
 }
 function hasSavedCheckout(){return Boolean(activeCheckoutAttempt||checkoutRecoveryHold||checkoutStorageError)}
-function clearActiveCheckoutAttempt(){checkoutSession.removeItem(checkoutStorageKey("checkout-attempt"));localStorage.removeItem(checkoutStorageKey("checkout-hold"));activeCheckoutAttempt=null;checkoutRecoveryHold=null;checkoutForm.hidden=false}
+function clearActiveCheckoutAttempt(){
+ try{
+  clearRejectedCheckoutAttempt({storage:checkoutSession,holdStorage:localStorage,attempt:activeCheckoutAttempt});
+  activeCheckoutAttempt=readCheckoutAttempt({storage:checkoutSession});checkoutRecoveryHold=readCheckoutHold({storage:localStorage});
+ }catch{checkoutStorageError=true}
+ checkoutForm.hidden=hasSavedCheckout();
+}
 function showCheckoutRecoveryHold(){
  checkoutForm.hidden=true;
  const statusLink=checkoutRecoveryHold?.orderId?`<p><a href="confirmation.html?order_id=${encodeURIComponent(checkoutRecoveryHold.orderId)}">Check this order's status</a></p>`:"";
@@ -217,7 +223,7 @@ async function handleCheckoutSubmit(event){
    trackBeginCheckout({currency:String(order.currency||"USD"),value:Number(order.total||0)/100,items});
    checkoutForm.hidden=true;
    checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Subtotal: ${escapeHtml(order.currency||"USD")} ${money(Number(order.subtotal||0)/100)}</p><p>Sales tax: ${escapeHtml(order.currency||"USD")} ${money(Number(order.tax||0)/100)}</p><p>Shipping: ${escapeHtml(order.currency||"USD")} ${money(Number(order.shipping||0)/100)}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>Select a payment method to continue to its hosted payment page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal</button></div></div>`;
-   const paymentController=createPaymentController({config:COMMERCE_CONFIG,orderId:order.id,storage:checkoutSession});
+   const paymentController=createPaymentController({config:COMMERCE_CONFIG,orderId:order.id,storage:checkoutSession,holdStorage:localStorage});
    const paymentButtons=checkoutStatus.querySelectorAll("[data-payment-provider]");
    paymentButtons.forEach(button=>button.addEventListener("click",async()=>{
     const provider=button.dataset.paymentProvider;
@@ -266,6 +272,7 @@ async function handleCheckoutSubmit(event){
    checkoutStatus.textContent="The checkout service is temporarily unavailable. Retry to safely reuse this checkout attempt.";
   }
   if(result.action!=="confirm"&&activeCheckoutAttempt)showSavedCheckout(checkoutStatus.textContent);
+  else if(result.action!=="confirm"&&(checkoutRecoveryHold||checkoutStorageError))showCheckoutRecoveryHold();
 }
 const newsletterForm=$("#newsletterForm");
 if(newsletterForm)newsletterForm.onsubmit=e=>{e.preventDefault();toast("Thanks for joining Nutrileaf!");e.target.reset()};

@@ -1,4 +1,5 @@
 import { COMMERCE_CONFIG, commerceApiBase, checkoutStorageKey, ORDER_ID_PATTERN } from "./commerce-config.js";
+import { readCheckoutHold } from "./checkout-state.js";
 
 function safeRedirect(value, provider, environment) {
   if (typeof value !== "string") return false;
@@ -37,7 +38,7 @@ export async function submitPaymentInitiation({ config = COMMERCE_CONFIG, orderI
   }
 }
 
-export function createPaymentController({ config = COMMERCE_CONFIG, orderId, storage, fetchImpl = fetch, uuid = () => crypto.randomUUID() }) {
+export function createPaymentController({ config = COMMERCE_CONFIG, orderId, storage, holdStorage = storage, fetchImpl = fetch, uuid = () => crypto.randomUUID() }) {
   let inFlight = false;
   return {
     async initiate(provider) {
@@ -46,6 +47,7 @@ export function createPaymentController({ config = COMMERCE_CONFIG, orderId, sto
       if (!ORDER_ID_PATTERN.test(orderId || "") || !["STRIPE", "PAYPAL"].includes(provider)) return { action: "invalid", status: 0, payload: null };
       inFlight = true;
       try {
+        if (readCheckoutHold({ storage: holdStorage, config })?.legacy) return { action: "conflict", status: 0, payload: null };
         const storageKey = checkoutStorageKey(`payment-operation:${orderId}`, config);
         const raw = storage.getItem(storageKey);
         const operation = raw ? JSON.parse(raw) : { provider, operationId: uuid() };

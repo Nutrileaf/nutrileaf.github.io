@@ -10,7 +10,7 @@ const orderId = "11111111-1111-4111-8111-111111111111";
 const operationId = "22222222-2222-4222-8222-222222222222";
 const order = { id: orderId, order_number: "NL-1", status: "PENDING", subtotal: 849, tax: 0, shipping: 599, total: 1448, currency: "USD" };
 const request = { customer: { email: "buyer@example.test" }, items: [{ product_id: "product-1", quantity: 1 }], shipping_rate_id: "rate-1" };
-function storage() { const data = new Map(); return { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) }; }
+function storage() { const data = new Map(); return { get length() { return data.size; }, key: index => [...data.keys()][index] ?? null, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) }; }
 const response = () => new Response(JSON.stringify({ provider: "STRIPE", operation_id: operationId, redirect_url: "https://checkout.stripe.com/c/pay/cs_live_abc" }), { status: 201 });
 
 test("checkout retry and reload preserve the exact request and key even after inputs or rates change", () => {
@@ -160,4 +160,99 @@ test("legacy TEST personal drafts and fingerprints are stripped without discardi
   assert.equal(durable.getItem("nutrileaf-checkout-attempt"), null);
   assert.deepEqual(JSON.parse(durable.getItem("nutrileaf-legacy-test-checkout-hold")), { key: "checkout-legacy" });
   assert.equal(state.readCheckoutHold({ storage: durable, config }), null);
+});
+
+test("a stale tab's terminal status cannot delete a newer checkout hold or cart", () => {
+  const sessionA = storage(), sessionB = storage(), durable = storage();
+  const attemptA = { request, fingerprint: JSON.stringify(request), key: "checkout-A", cartRevision: "cart-A", order };
+  state.saveCheckoutAttempt({ storage: sessionA, holdStorage: durable, config, attempt: attemptA });
+  const verifiedA = { action: "status", status: 200, payload: { order: { number: "NL-1", status: "PAID" } } };
+  state.clearCompletedCheckout({ storage: sessionB, cartStorage: durable, config, orderId, statusResult: verifiedA });
+  const orderB = { ...order, id: "33333333-3333-4333-8333-333333333333", order_number: "NL-2" };
+  const attemptB = { ...attemptA, key: "checkout-B", cartRevision: "cart-B", order: orderB };
+  state.saveCheckoutAttempt({ storage: sessionB, holdStorage: durable, config, attempt: attemptB });
+  durable.setItem("nutrileaf-cart-v2", JSON.stringify(request.items));
+  durable.setItem(launch.checkoutStorageKey("cart-revision", config), "cart-B");
+  assert.equal(state.clearCompletedCheckout({ storage: sessionA, cartStorage: durable, config, orderId, statusResult: verifiedA }), false);
+  assert.deepEqual(state.readCheckoutHold({ storage: durable, config }), { key: "checkout-B", orderId: orderB.id });
+  assert.deepEqual(JSON.parse(durable.getItem("nutrileaf-cart-v2")), request.items);
+  assert.equal(durable.getItem(launch.checkoutStorageKey("cart-revision", config)), "cart-B");
+});
+
+test("completion never deletes a hold whose server order differs even when its key matches", () => {
+  const session = storage(), durable = storage();
+  state.saveCheckoutAttempt({ storage: session, holdStorage: durable, config, attempt: { request, fingerprint: JSON.stringify(request), key: "checkout-A", cartRevision: "cart-A", order } });
+  const replacement = { key: "checkout-A", orderId: "33333333-3333-4333-8333-333333333333" };
+  durable.setItem(launch.checkoutStorageKey("checkout-hold", config), JSON.stringify(replacement));
+  durable.setItem("nutrileaf-cart-v2", JSON.stringify(request.items));
+  durable.setItem(launch.checkoutStorageKey("cart-revision", config), "cart-A");
+  assert.equal(state.clearCompletedCheckout({ storage: session, cartStorage: durable, config, orderId, statusResult: { action: "status", status: 200, payload: { order: { number: "NL-1", status: "PAID" } } } }), false);
+  assert.deepEqual(state.readCheckoutHold({ storage: durable, config }), replacement);
+  assert.deepEqual(JSON.parse(durable.getItem("nutrileaf-cart-v2")), request.items);
+});
+
+test("a stale definitive rejection cannot clear a newer durable hold or another session's attempt", () => {
+  assert.equal(typeof state.clearRejectedCheckoutAttempt, "function");
+  const sessionA = storage(), sessionB = storage(), durable = storage();
+  const attemptA = { request, fingerprint: JSON.stringify(request), key: "checkout-A", cartRevision: "cart-A" };
+  state.saveCheckoutAttempt({ storage: sessionA, holdStorage: durable, config, attempt: attemptA });
+  durable.removeItem(launch.checkoutStorageKey("checkout-hold", config));
+  const attemptB = { ...attemptA, key: "checkout-B", cartRevision: "cart-B" };
+  state.saveCheckoutAttempt({ storage: sessionB, holdStorage: durable, config, attempt: attemptB });
+  state.clearRejectedCheckoutAttempt({ storage: sessionA, holdStorage: durable, config, attempt: attemptA });
+  assert.deepEqual(state.readCheckoutHold({ storage: durable, config }), { key: "checkout-B", orderId: null });
+  assert.equal(state.readCheckoutAttempt({ storage: sessionA, config }), null);
+  assert.equal(state.readCheckoutAttempt({ storage: sessionB, config }).key, "checkout-B");
+  state.clearRejectedCheckoutAttempt({ storage: sessionB, holdStorage: durable, config, attempt: attemptA });
+  assert.equal(state.readCheckoutAttempt({ storage: sessionB, config }).key, "checkout-B");
+  state.clearRejectedCheckoutAttempt({ storage: sessionB, holdStorage: durable, config, attempt: attemptB });
+  assert.equal(state.readCheckoutAttempt({ storage: sessionB, config }), null);
+  assert.equal(state.readCheckoutHold({ storage: durable, config }), null);
+});
+
+test("an unresolved legacy checkout blocks TEST without adopting its identity into the new namespace", () => {
+  const testConfig = { ...config, environment: "test", apiBase: "https://nutrileaf-api.adam-d-may-20.workers.dev" };
+  const durable = storage(), session = storage();
+  durable.setItem("nutrileaf-checkout-attempt", JSON.stringify({ key: "checkout-legacy", fingerprint: "private@example.test" }));
+  state.clearLegacyPersonalCheckoutState(durable);
+  const hold = state.readCheckoutHold({ storage: durable, config: testConfig });
+  assert.deepEqual(hold, { key: "checkout-legacy", orderId: null, legacy: true });
+  assert.throws(() => state.prepareCheckoutAttempt({ request, hold, cartRevision: "cart-1", uuid: () => "must-not-create" }), /reconcil/i);
+  assert.throws(() => state.saveCheckoutAttempt({ storage: session, holdStorage: durable, config: testConfig, attempt: { request, fingerprint: JSON.stringify(request), key: "checkout-legacy", cartRevision: "cart-1" } }), /reconcil/i);
+  assert.equal(session.getItem(launch.checkoutStorageKey("checkout-attempt", testConfig)), null);
+  assert.equal(durable.getItem(launch.checkoutStorageKey("checkout-hold", testConfig)), null);
+  assert.equal(state.readCheckoutHold({ storage: durable, config }), null);
+  assert.equal(state.prepareCheckoutAttempt({ request, cartRevision: "cart-1", uuid: () => "production-new" }).key, "checkout-production-new");
+});
+
+test("malformed legacy checkout holds fail closed only for TEST", () => {
+  const testConfig = { ...config, environment: "test", apiBase: "https://nutrileaf-api.adam-d-may-20.workers.dev" };
+  for (const raw of ["invalid-json", "{}", JSON.stringify({ key: null })]) {
+    const durable = storage();
+    durable.setItem("nutrileaf-legacy-test-checkout-hold", raw);
+    assert.throws(() => state.readCheckoutHold({ storage: durable, config: testConfig }), /reconcil/i);
+    assert.equal(state.readCheckoutHold({ storage: durable, config }), null);
+    assert.equal(durable.getItem("nutrileaf-legacy-test-checkout-hold"), raw);
+  }
+});
+
+test("legacy TEST payment operation identities remain durable and block replacement operations", async () => {
+  const testConfig = { ...config, environment: "test", apiBase: "https://nutrileaf-api.adam-d-may-20.workers.dev" };
+  for (const oldOperation of [operationId, "malformed-operation-identity"]) {
+    const durable = storage(), session = storage();
+    const legacyKey = `nutrileaf-payment-operation:${orderId}:STRIPE`;
+    durable.setItem(legacyKey, oldOperation);
+    state.clearLegacyPersonalCheckoutState(durable);
+    const hold = state.readCheckoutHold({ storage: durable, config: testConfig });
+    assert.deepEqual(hold, { key: null, orderId: null, legacy: true });
+    assert.throws(() => state.prepareCheckoutAttempt({ request, hold, cartRevision: "cart-1", uuid: () => "must-not-create" }), /reconcil/i);
+    let calls = 0, minted = 0;
+    const controller = payment.createPaymentController({ config: testConfig, orderId, storage: session, holdStorage: durable, uuid: () => { minted++; return operationId; }, fetchImpl: async () => { calls++; return response(); } });
+    assert.equal((await controller.initiate("STRIPE")).action, "conflict");
+    assert.equal(calls, 0);
+    assert.equal(minted, 0);
+    assert.equal(durable.getItem(legacyKey), oldOperation);
+    assert.equal(session.getItem(launch.checkoutStorageKey(`payment-operation:${orderId}`, testConfig)), null);
+    assert.equal(state.readCheckoutHold({ storage: durable, config }), null);
+  }
 });

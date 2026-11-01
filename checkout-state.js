@@ -80,6 +80,20 @@ export function prepareCheckoutAttempt({ request, stored = null, hold = null, ca
 export function readCheckoutHold({ storage, config = COMMERCE_CONFIG }) {
   const storageKey = checkoutStorageKey("checkout-hold", config);
   if (!storageKey) return null;
+  if (config.environment === "test") {
+    for (const legacyKey of ["nutrileaf-legacy-test-checkout-hold", "nutrileaf-checkout-attempt"]) {
+      const legacyRaw = storage.getItem(legacyKey);
+      if (legacyRaw === null) continue;
+      let legacy;
+      try { legacy = JSON.parse(legacyRaw); } catch { throw new Error("Legacy TEST checkout requires reconciliation"); }
+      if (typeof legacy?.key !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/.test(legacy.key)) throw new Error("Legacy TEST checkout requires reconciliation");
+      return { key: legacy.key, orderId: null, legacy: true };
+    }
+    if (!Number.isSafeInteger(storage.length) || storage.length < 0 || typeof storage.key !== "function") throw new Error("Legacy TEST storage requires reconciliation");
+    for (let index = 0; index < storage.length; index++) {
+      if (storage.key(index)?.startsWith("nutrileaf-payment-operation:")) return { key: null, orderId: null, legacy: true };
+    }
+  }
   const raw = storage.getItem(storageKey);
   if (!raw) return null;
   const hold = JSON.parse(raw);
@@ -121,10 +135,30 @@ export function saveCheckoutAttempt({ storage, holdStorage = storage, config = C
   const storageKey = checkoutStorageKey("checkout-attempt", config);
   if (!storageKey) return false;
   const priorHold = readCheckoutHold({ storage: holdStorage, config });
-  if (priorHold && priorHold.key !== attempt.key) throw new Error("Previous checkout requires reconciliation");
+  if (priorHold && (priorHold.legacy || priorHold.key !== attempt.key)) throw new Error("Previous checkout requires reconciliation");
   storage.setItem(storageKey, JSON.stringify(attempt));
   holdStorage.setItem(checkoutStorageKey("checkout-hold", config), JSON.stringify({ key: attempt.key, orderId: attempt.order?.id || priorHold?.orderId || null }));
   return true;
+}
+
+function holdMatchesAttempt(hold, attempt) {
+  return Boolean(hold && attempt && !hold.legacy && hold.key === attempt.key &&
+    (hold.orderId === null || hold.orderId === attempt.order?.id));
+}
+
+function removeMatchingCheckoutHold({ storage, config, expected }) {
+  if (!expected || expected.legacy) return false;
+  const current = readCheckoutHold({ storage, config });
+  if (!current || current.legacy || current.key !== expected.key || current.orderId !== expected.orderId) return false;
+  storage.removeItem(checkoutStorageKey("checkout-hold", config));
+  return true;
+}
+
+export function clearRejectedCheckoutAttempt({ storage, holdStorage = storage, config = COMMERCE_CONFIG, attempt }) {
+  const currentAttempt = readCheckoutAttempt({ storage, config });
+  if (currentAttempt?.key === attempt?.key && currentAttempt?.order?.id === attempt?.order?.id) storage.removeItem(checkoutStorageKey("checkout-attempt", config));
+  const hold = readCheckoutHold({ storage: holdStorage, config });
+  if (holdMatchesAttempt(hold, attempt)) removeMatchingCheckoutHold({ storage: holdStorage, config, expected: hold });
 }
 
 export function clearCompletedCheckout({ storage, cartStorage = storage, holdStorage = cartStorage, config = COMMERCE_CONFIG, orderId, statusResult }) {
@@ -136,14 +170,15 @@ export function clearCompletedCheckout({ storage, cartStorage = storage, holdSto
     const attempt = readCheckoutAttempt({ storage, config });
     const hold = readCheckoutHold({ storage: holdStorage, config });
     const knownAttempt = attempt?.order?.id === orderId && attempt.order.order_number === publicOrder.number;
-    if (attempt?.order ? !knownAttempt : hold?.orderId !== orderId) return false;
+    if (attempt?.order ? !knownAttempt : !hold || hold.legacy || hold.orderId !== orderId) return false;
+    const ownsHold = !hold || (attempt ? holdMatchesAttempt(hold, attempt) : hold.orderId === orderId);
     const revisionKey = checkoutStorageKey("cart-revision", config);
     const currentCart = normalizeCart(JSON.parse(cartStorage.getItem("nutrileaf-cart-v2") || "[]"));
-    const clearCart = paid && knownAttempt && cartStorage.getItem(revisionKey) === attempt.cartRevision &&
+    const clearCart = paid && knownAttempt && ownsHold && cartStorage.getItem(revisionKey) === attempt.cartRevision &&
       checkoutFingerprint(currentCart) === checkoutFingerprint(attempt.request.items);
     if (clearCart) { cartStorage.setItem("nutrileaf-cart-v2", "[]"); cartStorage.removeItem(revisionKey); }
     for (const name of ["checkout-attempt", "checkout-draft", `payment-operation:${orderId}`]) storage.removeItem(checkoutStorageKey(name, config));
-    holdStorage.removeItem(checkoutStorageKey("checkout-hold", config));
+    if (ownsHold) removeMatchingCheckoutHold({ storage: holdStorage, config, expected: hold });
     return clearCart;
   } catch { return false; }
 }
