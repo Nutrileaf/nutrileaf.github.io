@@ -1,10 +1,13 @@
-import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, checkoutKeyFor, validateCheckoutRequest } from "./checkout-state.js";
-import { submitCheckout } from "./checkout-submit.js";
-import { submitPaymentInitiation } from "./payment-initiation.js";
+import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, validateCheckoutRequest, createShippingRateRequest, selectedShippingRate, prepareCheckoutAttempt, readCheckoutAttempt, readCheckoutHold, saveCheckoutAttempt, clearLegacyPersonalCheckoutState } from "./checkout-state.js";
+import { submitCheckout, getShippingRates } from "./checkout-submit.js";
+import { createPaymentController } from "./payment-initiation.js";
 import { trackAddToCart, trackBeginCheckout } from "./analytics.js";
 import { normalizeProductAvailability, isProductPurchasable, resolveProductImage, reconcileUnavailableCartItems } from "./p23-storefront-compat.js";
+import { CATALOG_API_BASE } from "./p27-catalog-launch.js";
+import { COMMERCE_CONFIG, commerceApiBase, isSupportedCheckoutCart, checkoutStorageKey } from "./commerce-config.js";
 
 const products=[];
+try{clearLegacyPersonalCheckoutState(localStorage)}catch{}
 let cart=[];
 try { cart=JSON.parse(localStorage.getItem("nutrileaf-cart-v2")||"[]"); } catch { cart=[]; }
 cart=normalizeCart(cart);
@@ -13,7 +16,8 @@ if(localStorage.getItem("nutrileaf-cart")){
  localStorage.removeItem("nutrileaf-cart");
  localStorage.setItem("nutrileaf-cart-refresh","1");
 }
-const API_BASE="https://nutrileaf-api.adam-d-may-20.workers.dev";
+const API_BASE=CATALOG_API_BASE;
+const commerceReady=Boolean(commerceApiBase());
 const $=s=>document.querySelector(s);
 function money(n){return "$"+n.toFixed(2)}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
@@ -23,14 +27,16 @@ async function loadCatalog(){
   if(!response.ok) throw new Error("Catalog unavailable");
   const payload=await response.json();
   products.splice(0,products.length,...normalizeCatalog(payload.products).map(p=>({...p,type:p.category||"Other",desc:p.description||"",price:Number(p.price)/100,symbol:"✿",availability:normalizeProductAvailability(p),image:resolveProductImage(p,API_BASE)})));
+  const priorCart=JSON.stringify(cart);
   cart=cart.filter(item=>products.some(product=>String(product.id)===item.product_id));
+  if(commerceReady&&priorCart!==JSON.stringify(cart))localStorage.setItem(checkoutStorageKey("cart-revision"),crypto.randomUUID());
   localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));
   if($("#products"))renderProducts();renderCart();
-  if(checkoutButton)checkoutButton.disabled=cart.length===0;
-  if(checkoutSubmit)checkoutSubmit.disabled=false;
+  if(checkoutButton)checkoutButton.disabled=!commerceReady||(!hasSavedCheckout()&&!isSupportedCheckoutCart(cart));
+  if(checkoutSubmit)checkoutSubmit.disabled=!commerceReady||!currentShippingRate();
   if(localStorage.getItem("nutrileaf-cart-refresh")){localStorage.removeItem("nutrileaf-cart-refresh");toast("Your cart was refreshed to use the current catalog.")}
   return true;
- } catch { toast("Catalog is unavailable. Checkout is disabled."); if(checkoutButton)checkoutButton.disabled=true;if(checkoutSubmit)checkoutSubmit.disabled=true;return false; }
+ } catch { toast("Catalog is unavailable. Checkout is disabled."); if(checkoutButton)checkoutButton.disabled=!commerceReady||!hasSavedCheckout();if(checkoutSubmit)checkoutSubmit.disabled=true;return false; }
 }
 
 function renderProducts(filter="All"){
@@ -39,8 +45,8 @@ function renderProducts(filter="All"){
  $("#products").querySelectorAll("[data-add-product]").forEach(button=>button.addEventListener("click",()=>addToCart(button.dataset.addProduct)));
 }
 function analyticsItem(p,quantity=1){return {item_id:String(p.sku||p.id),item_name:String(p.name||""),price:Number(p.price),quantity}}
-function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p||!isProductPurchasable(p))return false;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`);return true}
-function save(){cart=normalizeCart(cart);localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));renderCart();if(checkoutButton)checkoutButton.disabled=products.length===0||cart.length===0}
+function addToCart(id,quantity=1){const p=products.find(x=>String(x.id)===String(id));if(!p||!isProductPurchasable(p)||!commerceReady||!isSupportedCheckoutCart(normalizeCart([...cart,{product_id:String(id),quantity}])))return false;const item=cart.find(x=>x.product_id===String(id));item?item.quantity+=quantity:cart.push({product_id:String(id),quantity});trackAddToCart({currency:"USD",item:analyticsItem(p,quantity)});save();toast(`${quantity} × ${p.name} added to cart`);return true}
+function save(){cart=normalizeCart(cart);localStorage.setItem("nutrileaf-cart-v2",JSON.stringify(cart));if(commerceReady)localStorage.setItem(checkoutStorageKey("cart-revision"),crypto.randomUUID());resetShippingSelection();renderCart();if(checkoutButton)checkoutButton.disabled=!commerceReady||(!hasSavedCheckout()&&(products.length===0||!isSupportedCheckoutCart(cart)))}
 function renderCart(){
  const cartCount=$("#cartCount"),cartItems=$("#cartItems"),cartTotal=$("#cartTotal");
  if(!cartCount||!cartItems||!cartTotal)return;
@@ -70,6 +76,66 @@ if(cartQuery.get("openCart")==="1" && cartDrawer){
 if(closeCart&&cartDrawer)closeCart.onclick=()=>{cartDrawer.classList.remove("open");cartDrawer.setAttribute("aria-hidden","true")};
 if(cartDrawer&&closeCart)cartDrawer.addEventListener("click",e=>{if(e.target.id==="cartDrawer")closeCart.click()});
 const checkoutDialog=$("#checkoutDialog"),closeCheckout=$("#closeCheckout"),checkoutForm=$("#checkoutForm"),checkoutSubmit=$("#checkoutSubmit"),checkoutErrors=$("#checkoutErrors"),checkoutStatus=$("#checkoutStatus");
+const shippingButton=$("#shippingRatesButton"),shippingSelect=$("#shippingRate"),shippingStatus=$("#shippingStatus");
+let shippingSelection=null,shippingGeneration=0,shippingBusy=false,checkoutBusy=false;
+let activeCheckoutAttempt=null,checkoutRecoveryHold=null,checkoutSession=null,checkoutStorageError=false;
+if(commerceReady){
+ try {
+  checkoutSession=sessionStorage;
+  const revisionKey=checkoutStorageKey("cart-revision");
+  if(!localStorage.getItem(revisionKey))localStorage.setItem(revisionKey,crypto.randomUUID());
+  checkoutRecoveryHold=readCheckoutHold({storage:localStorage});
+  activeCheckoutAttempt=readCheckoutAttempt({storage:checkoutSession});
+  if(activeCheckoutAttempt&&checkoutRecoveryHold&&activeCheckoutAttempt.key!==checkoutRecoveryHold.key)throw new Error("Checkout identity requires reconciliation");
+ }catch{checkoutStorageError=true}
+}
+function hasSavedCheckout(){return Boolean(activeCheckoutAttempt||checkoutRecoveryHold||checkoutStorageError)}
+function clearActiveCheckoutAttempt(){checkoutSession.removeItem(checkoutStorageKey("checkout-attempt"));localStorage.removeItem(checkoutStorageKey("checkout-hold"));activeCheckoutAttempt=null;checkoutRecoveryHold=null;checkoutForm.hidden=false}
+function showCheckoutRecoveryHold(){
+ checkoutForm.hidden=true;
+ const statusLink=checkoutRecoveryHold?.orderId?`<p><a href="confirmation.html?order_id=${encodeURIComponent(checkoutRecoveryHold.orderId)}">Check this order's status</a></p>`:"";
+ const reference=checkoutRecoveryHold?.key?` Reference: ${escapeHtml(checkoutRecoveryHold.key)}.`:"";
+ checkoutStatus.innerHTML=`<p>A previous checkout needs verification before another checkout can begin. Please check its order status or contact the store.${reference}</p>${statusLink}`;
+}
+function showSavedCheckout(message="A saved checkout is awaiting confirmation. Resume it with its original delivery details and shipping selection."){
+ checkoutForm.hidden=true;
+ const statusLink=activeCheckoutAttempt?.order?`<p><a href="confirmation.html?order_id=${encodeURIComponent(activeCheckoutAttempt.order.id)}">Check this order's status</a></p>`:"";
+ checkoutStatus.innerHTML=`<p>${escapeHtml(message)}</p><button class="button" type="button" data-resume-checkout>Resume saved checkout</button>${statusLink}`;
+ checkoutStatus.querySelector("[data-resume-checkout]").addEventListener("click",()=>handleCheckoutSubmit({preventDefault(){}}));
+}
+function shippingFingerprint(){return checkoutFingerprint(createShippingRateRequest({cart,customer:formCustomer(checkoutForm)}))}
+function currentShippingRate(){return checkoutForm?selectedShippingRate(shippingSelection,shippingFingerprint()):null}
+function resetShippingSelection(){
+ shippingGeneration++;shippingSelection=null;
+ if(shippingSelect){shippingSelect.innerHTML='<option value="">Select a shipping service</option>';shippingSelect.disabled=true}
+ if(shippingStatus)shippingStatus.textContent="Get shipping rates for the current delivery details.";
+ if(checkoutSubmit)checkoutSubmit.disabled=true;
+}
+if(shippingButton){
+ shippingButton.disabled=!commerceReady;
+ shippingButton.addEventListener("click",async()=>{
+  if(!commerceReady||shippingBusy||checkoutBusy)return;
+  const request=createCheckoutRequest({cart,customer:formCustomer(checkoutForm)});
+  const errors=validateCheckoutRequest(request);showCheckoutErrors(errors);
+  if(Object.keys(errors).length)return;
+  if(!isSupportedCheckoutCart(request.items)){shippingStatus.textContent="This cart is not available for online checkout.";return;}
+  resetShippingSelection();
+  const generation=shippingGeneration,fingerprint=shippingFingerprint();
+  shippingBusy=true;shippingButton.disabled=true;shippingStatus.textContent="Checking shipping services…";
+  const rates=await getShippingRates({body:createShippingRateRequest({cart,customer:formCustomer(checkoutForm)})});
+  shippingBusy=false;shippingButton.disabled=!commerceReady;
+  if(generation!==shippingGeneration||fingerprint!==shippingFingerprint())return;
+  if(rates.action==="rates"){
+   shippingSelection={requestFingerprint:fingerprint,rates:rates.payload.rates,rateId:""};
+   shippingSelect.innerHTML='<option value="">Select a shipping service</option>'+rates.payload.rates.map(rate=>`<option value="${escapeHtml(rate.rate_id)}">${escapeHtml(rate.carrier)} ${escapeHtml(rate.service)} — ${money(rate.amount/100)}</option>`).join("");
+   shippingSelect.disabled=false;shippingStatus.textContent="Choose a shipping service. Rates may expire before checkout.";
+  }else shippingStatus.textContent=rates.action==="review-required"?"Shipping needs store review before checkout. Please contact the store.":"Shipping is temporarily unavailable. Check your details and try again.";
+ });
+}
+if(shippingSelect)shippingSelect.addEventListener("change",()=>{
+ if(shippingSelection)shippingSelection.rateId=shippingSelect.value;
+ checkoutSubmit.disabled=!commerceReady||checkoutBusy||!currentShippingRate();
+});
 let checkoutReturnFocus=null;
 function setCheckoutOpen(open){
  if(!checkoutDialog)return;
@@ -92,15 +158,18 @@ function showCheckoutErrors(errors){
  checkoutErrors.innerHTML=Object.values(errors).map(message=>`<p>${escapeHtml(message)}</p>`).join("");
 }
 function restoreCheckoutDraft(){
- if(!checkoutForm)return;
- try { const draft=JSON.parse(localStorage.getItem("nutrileaf-checkout-draft")||"{}"); for(const [name,value] of Object.entries(draft))if(checkoutForm.elements[name]&&typeof value==="string")checkoutForm.elements[name].value=value; } catch {}
+ if(!checkoutForm||!commerceReady||!checkoutSession)return;
+ try { const draft=JSON.parse(checkoutSession.getItem(checkoutStorageKey("checkout-draft"))||"{}"); for(const [name,value] of Object.entries(draft))if(checkoutForm.elements[name]&&typeof value==="string")checkoutForm.elements[name].value=value; } catch {}
 }
 function saveCheckoutDraft(){
- if(!checkoutForm)return;
+ if(!checkoutForm||!commerceReady||!checkoutSession||checkoutStorageError||activeCheckoutAttempt)return;
  const draft=Object.fromEntries(new FormData(checkoutForm).entries());
- localStorage.setItem("nutrileaf-checkout-draft",JSON.stringify(draft));
+ try{checkoutSession.setItem(checkoutStorageKey("checkout-draft"),JSON.stringify(draft))}catch{checkoutStorageError=true;checkoutSubmit.disabled=true;checkoutStatus.textContent="Your checkout details could not be saved for safe retry. Please try again later."}
 }
 if(checkoutButton)checkoutButton.onclick=()=>{
+ if(!commerceReady)return;
+ if(activeCheckoutAttempt){showSavedCheckout();setCheckoutOpen(true);return;}
+ if(checkoutRecoveryHold||checkoutStorageError){showCheckoutRecoveryHold();setCheckoutOpen(true);return;}
  if(!cart.length){toast("Your cart is empty");return}
  if(checkoutForm?.hidden){checkoutForm.hidden=false;checkoutForm.reset();checkoutStatus.textContent="";showCheckoutErrors({})}
  setCheckoutOpen(true);
@@ -109,70 +178,94 @@ if(closeCheckout)closeCheckout.onclick=()=>setCheckoutOpen(false);
 if(checkoutDialog)checkoutDialog.addEventListener("click",event=>{if(event.target===checkoutDialog)setCheckoutOpen(false)});
 if(checkoutForm){
  restoreCheckoutDraft();
- checkoutForm.addEventListener("input",saveCheckoutDraft);
- checkoutForm.addEventListener("submit",async event=>{
+ checkoutForm.addEventListener("input",event=>{if(event.target!==shippingSelect){saveCheckoutDraft();resetShippingSelection()}});
+ checkoutForm.addEventListener("submit",handleCheckoutSubmit);
+}
+async function handleCheckoutSubmit(event){
   event.preventDefault();
-  const request=createCheckoutRequest({cart,customer:formCustomer(checkoutForm)});
-  const errors=validateCheckoutRequest(request);
-  showCheckoutErrors(errors);
-  if(Object.keys(errors).length)return;
-  const fingerprint=checkoutFingerprint(request);
-  let storedAttempt=null;
-  try { storedAttempt=JSON.parse(localStorage.getItem("nutrileaf-checkout-attempt")||"null"); } catch {}
-  const key=checkoutKeyFor(fingerprint,storedAttempt);
-  localStorage.setItem("nutrileaf-checkout-attempt",JSON.stringify({fingerprint,key}));
+  if(!commerceReady){checkoutSubmit.disabled=true;checkoutStatus.textContent="Online ordering is currently unavailable.";return;}
+  if(checkoutStorageError){checkoutStatus.textContent="Your saved checkout could not be accessed. Please contact the store before starting another checkout.";return;}
+  if(!activeCheckoutAttempt&&checkoutRecoveryHold){showCheckoutRecoveryHold();return;}
+  if(checkoutBusy)return;
+  if(!activeCheckoutAttempt){
+   const selectedRate=currentShippingRate();
+   if(!selectedRate){resetShippingSelection();checkoutStatus.textContent="Get current shipping rates and choose a service before checkout.";return;}
+   const request=createCheckoutRequest({cart,customer:formCustomer(checkoutForm),shippingRateId:selectedRate.rate_id});
+   const errors=validateCheckoutRequest(request);showCheckoutErrors(errors);
+   if(Object.keys(errors).length)return;
+   activeCheckoutAttempt=prepareCheckoutAttempt({request,hold:checkoutRecoveryHold,cartRevision:localStorage.getItem(checkoutStorageKey("cart-revision"))});
+  }
+  const attempt=activeCheckoutAttempt,request=attempt.request,key=attempt.key;
+  try {saveCheckoutAttempt({storage:checkoutSession,holdStorage:localStorage,attempt});checkoutRecoveryHold=readCheckoutHold({storage:localStorage})}catch{checkoutStorageError=true;checkoutStatus.textContent="Your checkout could not be saved for safe retry. Please try again later.";return;}
+  checkoutBusy=true;
+  for(const field of checkoutForm.elements)field.disabled=true;
   checkoutSubmit.disabled=true;
   checkoutSubmit.textContent="Creating pending order…";
-  checkoutStatus.textContent="Submitting your TEST pending order.";
-  const result=await submitCheckout({apiBase:API_BASE,body:request,idempotencyKey:key});
-  checkoutSubmit.disabled=false;
+  checkoutStatus.textContent="Submitting your pending order.";
+  const result=await submitCheckout({config:COMMERCE_CONFIG,body:request,idempotencyKey:key});
+  checkoutBusy=false;
+  for(const field of checkoutForm.elements)field.disabled=false;
+  if(shippingSelect)shippingSelect.disabled=!shippingSelection;
+  checkoutSubmit.disabled=!currentShippingRate();
   checkoutSubmit.textContent="Create pending order";
   const message=result.payload?.error?.message||result.payload?.message;
   if(result.action==="confirm"){
    const order=result.payload?.order||{};
+   activeCheckoutAttempt={...attempt,order};
+   try{saveCheckoutAttempt({storage:checkoutSession,holdStorage:localStorage,attempt:activeCheckoutAttempt});checkoutRecoveryHold=readCheckoutHold({storage:localStorage})}catch{checkoutStorageError=true}
    const items=cart.map(x=>{const product=products.find(p=>String(p.id)===x.product_id);return product?analyticsItem(product,x.quantity):null}).filter(Boolean);
    trackBeginCheckout({currency:String(order.currency||"USD"),value:Number(order.total||0)/100,items});
    checkoutForm.hidden=true;
-   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Subtotal: ${escapeHtml(order.currency||"USD")} ${money(Number(order.subtotal||0)/100)}</p><p>Sales tax: ${escapeHtml(order.currency||"USD")} ${money(Number(order.tax||0)/100)}</p><p>Shipping: ${escapeHtml(order.currency||"USD")} ${money(Number(order.shipping||0)/100)}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>TEST only. Select a payment method to continue to its hosted TEST/Sandbox page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe TEST</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal Sandbox</button></div></div>`;
-   checkoutStatus.querySelectorAll("[data-payment-provider]").forEach(button=>button.addEventListener("click",async()=>{
+   checkoutStatus.innerHTML=`<div class="pending-confirmation"><strong>Pending order ${escapeHtml(order.order_number||"")} created</strong><p>Status: ${escapeHtml(order.status||"PENDING")}</p><p>Subtotal: ${escapeHtml(order.currency||"USD")} ${money(Number(order.subtotal||0)/100)}</p><p>Sales tax: ${escapeHtml(order.currency||"USD")} ${money(Number(order.tax||0)/100)}</p><p>Shipping: ${escapeHtml(order.currency||"USD")} ${money(Number(order.shipping||0)/100)}</p><p>Total: ${escapeHtml(order.currency||"USD")} ${money(Number(order.total||0)/100)}</p><p>Select a payment method to continue to its hosted payment page.</p><div class="payment-options"><button class="button" type="button" data-payment-provider="STRIPE">Pay with Stripe</button><button class="button" type="button" data-payment-provider="PAYPAL">Pay with PayPal</button></div></div>`;
+   const paymentController=createPaymentController({config:COMMERCE_CONFIG,orderId:order.id,storage:checkoutSession});
+   const paymentButtons=checkoutStatus.querySelectorAll("[data-payment-provider]");
+   paymentButtons.forEach(button=>button.addEventListener("click",async()=>{
     const provider=button.dataset.paymentProvider;
-    const storageKey=`nutrileaf-payment-operation:${order.id}:${provider}`;
-    let operationId=localStorage.getItem(storageKey);
-    if(!operationId){operationId=crypto.randomUUID();localStorage.setItem(storageKey,operationId)}
-    button.disabled=true;checkoutStatus.setAttribute("aria-busy","true");
-    const payment=await submitPaymentInitiation({apiBase:API_BASE,orderId:order.id,provider,operationId});
-    checkoutStatus.removeAttribute("aria-busy");button.disabled=false;
+    paymentButtons.forEach(control=>control.disabled=true);checkoutStatus.setAttribute("aria-busy","true");
+    const payment=await paymentController.initiate(provider);
+    if(payment.action==="busy")return;
+    checkoutStatus.removeAttribute("aria-busy");paymentButtons.forEach(control=>control.disabled=false);
     if(payment.action==="redirect"&&typeof payment.payload?.redirect_url==="string"){
-      cart=[];save();localStorage.removeItem(storageKey);localStorage.removeItem("nutrileaf-checkout-draft");location.assign(payment.payload.redirect_url);return;
+      location.assign(payment.payload.redirect_url);return;
     }
-    checkoutStatus.insertAdjacentHTML("beforeend",`<p class="checkout-errors">${payment.action==="conflict"?"This order already has a payment attempt. Please use its existing payment page.":"The TEST payment service is temporarily unavailable. Retry safely."}</p>`);
+    checkoutStatus.insertAdjacentHTML("beforeend",`<p class="checkout-errors">${payment.action==="conflict"?"This order already has a payment attempt. Please use its existing payment page.":"The payment service is temporarily unavailable. Retry safely."}</p>`);
    }));
-   localStorage.removeItem("nutrileaf-checkout-attempt");
+  }else if(result.action==="status-required"){
+   activeCheckoutAttempt={...attempt,order:result.payload.order};
+   try{saveCheckoutAttempt({storage:checkoutSession,holdStorage:localStorage,attempt:activeCheckoutAttempt});checkoutRecoveryHold=readCheckoutHold({storage:localStorage})}catch{checkoutStorageError=true}
+   checkoutStatus.textContent="An existing order was found. Check its authoritative status before continuing.";
   }else if(result.action==="tax-outage"){
    checkoutStatus.textContent=message||"Tax calculation is temporarily unavailable. Please try again later.";
   }else if(result.action==="inline-error"){
+   clearActiveCheckoutAttempt();
    showCheckoutErrors({request:message||"Check the highlighted order details and try again."});
    checkoutStatus.textContent="The pending order was not created.";
   }else if(result.action==="product-unavailable"){
    cart=reconcileUnavailableCartItems(cart,result.payload?.error?.product_ids);
-   localStorage.removeItem("nutrileaf-checkout-attempt");
+   clearActiveCheckoutAttempt();
    save();
    checkoutStatus.textContent="One or more cart items are no longer available. Your cart was updated.";
    setCheckoutOpen(false);
    await loadCatalog();
    if(cartDrawer){cartDrawer.classList.add("open");cartDrawer.setAttribute("aria-hidden","false")}
   }else if(result.action==="refresh-catalog"){
+   clearActiveCheckoutAttempt();
    checkoutStatus.textContent="A cart item is no longer available. Returning to the refreshed cart.";
    setCheckoutOpen(false);
    await loadCatalog();
    if(cartDrawer){cartDrawer.classList.add("open");cartDrawer.setAttribute("aria-hidden","false")}
   }else if(result.action==="restart-attempt"){
-   localStorage.removeItem("nutrileaf-checkout-attempt");
-   checkoutStatus.textContent="This checkout attempt conflicts with an earlier request. Review the form and submit again to start a new attempt.";
+   checkoutStatus.textContent="This saved checkout conflicts with the order record. Check its status or contact the store before starting another checkout.";
+  }else if(result.action==="refresh-shipping"||result.action==="shipping-required"){
+   clearActiveCheckoutAttempt();
+   resetShippingSelection();
+   checkoutStatus.textContent="Your shipping rate is no longer available. Get current shipping rates and choose a service.";
+  }else if(result.action==="unsupported-cart"){
+   checkoutStatus.textContent="This cart is not available for online checkout.";
   }else{
-   checkoutStatus.textContent="The TEST service is temporarily unavailable. Retry to safely reuse this checkout attempt.";
+   checkoutStatus.textContent="The checkout service is temporarily unavailable. Retry to safely reuse this checkout attempt.";
   }
- });
+  if(result.action!=="confirm"&&activeCheckoutAttempt)showSavedCheckout(checkoutStatus.textContent);
 }
 const newsletterForm=$("#newsletterForm");
 if(newsletterForm)newsletterForm.onsubmit=e=>{e.preventDefault();toast("Thanks for joining Nutrileaf!");e.target.reset()};

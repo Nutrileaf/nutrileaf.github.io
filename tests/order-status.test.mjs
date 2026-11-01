@@ -6,7 +6,7 @@ import { getOrderStatus } from "../order-status.js";
 test("P16 status lookup sends only the customer email to the authoritative endpoint", async () => {
   let call;
   const result = await getOrderStatus({
-    apiBase: "https://api.example.test",
+    config: {enabled:true,environment:"test",apiBase:"https://api.example.test",scope:{productId:"product-1",quantity:1}},
     orderId: "11111111-1111-4111-8111-111111111111",
     email: "buyer@example.test",
     fetchImpl: async (url, init) => {
@@ -23,7 +23,7 @@ test("P16 status lookup sends only the customer email to the authoritative endpo
 
 test("P16 status lookup treats URL and transport data as non-authoritative", async () => {
   const result = await getOrderStatus({
-    apiBase: "https://api.example.test",
+    config: {enabled:true,environment:"test",apiBase:"https://api.example.test",scope:{productId:"product-1",quantity:1}},
     orderId: "11111111-1111-4111-8111-111111111111",
     email: "buyer@example.test",
     fetchImpl: async () => new Response(JSON.stringify({ payment: "PAID", total: 1000 }), { status: 200 })

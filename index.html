@@ -130,12 +130,12 @@
   <div class="cart-panel"><div class="cart-head"><h2>Your cart</h2><button id="closeCart" tabindex="-1">×</button></div>
   <div id="cartItems"></div><div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div>
   <button class="button full" id="checkoutButton" disabled tabindex="-1">Proceed to checkout</button>
-  <p class="tiny">TEST checkout is retained only as dormant regression code during catalog launch.</p></div>
+  <p class="tiny">Online ordering is coming soon. Contact the store for availability.</p></div>
 </div>
 <section class="checkout-dialog" id="checkoutDialog" hidden role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="checkoutTitle">
   <div class="checkout-panel">
     <div class="cart-head"><h2 id="checkoutTitle">Delivery details</h2><button type="button" id="closeCheckout" tabindex="-1" aria-label="Close checkout">×</button></div>
-    <p class="checkout-notice">TEST checkout is unavailable during public catalog launch.</p>
+    <p class="checkout-notice">Online checkout is not available yet.</p>
     <form id="checkoutForm" novalidate>
       <div class="checkout-fields two-column">
         <label>First name<input name="first_name" autocomplete="given-name" required></label>
@@ -152,6 +152,9 @@
         <label>ZIP code<input name="postal_code" autocomplete="postal-code" inputmode="numeric" required></label>
       </div>
       <input name="country" type="hidden" value="US">
+      <button class="button full" id="shippingRatesButton" type="button" disabled tabindex="-1">Get shipping rates</button>
+      <label>Shipping service<select id="shippingRate" disabled tabindex="-1"><option value="">Select a shipping service</option></select></label>
+      <p id="shippingStatus" role="status" aria-live="polite">Shipping rates are unavailable while online ordering is closed.</p>
       <div class="checkout-errors" id="checkoutErrors" role="alert"></div>
       <button class="button full" id="checkoutSubmit" type="submit" disabled tabindex="-1">Create pending order</button>
     </form>

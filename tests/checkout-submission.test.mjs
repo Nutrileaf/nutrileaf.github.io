@@ -2,15 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { submitCheckout } from "../checkout-submit.js";
 
-const requestBody={customer:{email:"buyer@example.test"},items:[{product_id:"product-1",quantity:1}]};
+const requestBody={customer:{email:"buyer@example.test"},items:[{product_id:"product-1",quantity:1}],shipping_rate_id:"rate-1"};
 
 test("submits only the authoritative checkout request with its idempotency key", async () => {
   let call;
   const result=await submitCheckout({
-    apiBase:"https://api.example.test",
+    config:{enabled:true,environment:"test",apiBase:"https://api.example.test",scope:{productId:"product-1",quantity:1}},
     body:requestBody,
     idempotencyKey:"checkout-test-1",
-    fetchImpl:async (url,init)=>{call={url,init};return new Response(JSON.stringify({order:{order_number:"NL-1"}}),{status:201});}
+    fetchImpl:async (url,init)=>{call={url,init};return new Response(JSON.stringify({order:{id:"11111111-1111-4111-8111-111111111111",order_number:"NL-1",status:"PENDING",currency:"USD",subtotal:849,tax:0,shipping:599,total:1448}}),{status:201});}
   });
   assert.equal(call.url,"https://api.example.test/checkout/orders");
   assert.equal(call.init.headers["Idempotency-Key"],"checkout-test-1");
@@ -19,8 +19,8 @@ test("submits only the authoritative checkout request with its idempotency key",
 });
 
 test("preserves a retry action for network and server failures", async () => {
-  const failure=await submitCheckout({apiBase:"https://api.example.test",body:requestBody,idempotencyKey:"checkout-test-1",fetchImpl:async()=>{throw new Error("offline");}});
-  const server=await submitCheckout({apiBase:"https://api.example.test",body:requestBody,idempotencyKey:"checkout-test-1",fetchImpl:async()=>new Response("",{status:500})});
+  const failure=await submitCheckout({config:{enabled:true,environment:"test",apiBase:"https://api.example.test",scope:{productId:"product-1",quantity:1}},body:requestBody,idempotencyKey:"checkout-test-1",fetchImpl:async()=>{throw new Error("offline");}});
+  const server=await submitCheckout({config:{enabled:true,environment:"test",apiBase:"https://api.example.test",scope:{productId:"product-1",quantity:1}},body:requestBody,idempotencyKey:"checkout-test-1",fetchImpl:async()=>new Response("",{status:500})});
   assert.equal(failure.action,"retry");
   assert.equal(server.action,"retry");
 });
@@ -28,7 +28,7 @@ test("preserves a retry action for network and server failures", async () => {
 test("maps validation, unavailable product, and idempotency conflict without payment navigation", async () => {
   for (const [status, action] of [[400, "inline-error"], [404, "refresh-catalog"], [409, "restart-attempt"]]) {
     const result = await submitCheckout({
-      apiBase: "https://api.example.test",
+      config: {enabled:true,environment:"test",apiBase:"https://api.example.test",scope:{productId:"product-1",quantity:1}},
       body: requestBody,
       idempotencyKey: "checkout-test-1",
       fetchImpl: async () => new Response(JSON.stringify({ error: { message: "Test error" } }), { status })
