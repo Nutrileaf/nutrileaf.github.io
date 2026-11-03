@@ -60,9 +60,9 @@ test("P27 product detail is display-only while preserving the prior guarded add 
   assert.doesNotMatch(product, />View Cart</);
 });
 
-test("P27 preserves the legacy TEST checkout implementation without promoting it to production", () => {
-  assert.match(legacyScript, /const API_BASE="https:\/\/nutrileaf-api\.adam-d-may-20\.workers\.dev"/);
-  assert.match(legacyScript, /submitCheckout\(\{apiBase:API_BASE/);
-  assert.match(legacyScript, /submitPaymentInitiation\(\{apiBase:API_BASE/);
-  assert.doesNotMatch(legacyScript, /nutrileaf-catalog-prod/);
+test("catalog source is separate from explicitly gated commerce without a legacy TEST fallback", () => {
+  assert.match(legacyScript, /const API_BASE=CATALOG_API_BASE/);
+  assert.match(legacyScript, /submitCheckout\(\{config:COMMERCE_CONFIG/);
+  assert.match(legacyScript, /createPaymentController\(\{config:COMMERCE_CONFIG/);
+  assert.doesNotMatch(legacyScript, /https:\/\/nutrileaf-api\.adam-d-may-20\.workers\.dev/);
 });

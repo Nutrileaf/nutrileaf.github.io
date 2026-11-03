@@ -15,10 +15,11 @@ test('home page has one primary heading and keeps the collection inside the main
   assert.match(index, /<h1>The Collection<\/h1>/);
 });
 
-test('newsletter and review summary expose consistent accessible names', () => {
+test('newsletter region and review summary expose accessible names around the existing embedded form', () => {
   const index = read('index.html');
-  assert.match(index, /<label[^>]*for="newsletterEmail"[^>]*>Email address<\/label>/);
-  assert.match(index, /<input id="newsletterEmail" type="email"/);
+  assert.match(index, /<section class="newsletter" aria-labelledby="newsletter-title">/);
+  assert.match(index, /<h2 id="newsletter-title">[^<]+<\/h2>/);
+  assert.match(index, /<div class="kit-newsletter-form">\s*<script async data-uid="399e8d39ce" src="https:\/\/nutrileaf\.kit\.com\/399e8d39ce\/index\.js"><\/script>/);
   assert.match(index, /aria-label="4\.95 out of 5 stars"/);
 });
 

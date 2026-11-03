@@ -17,8 +17,8 @@ test("P23 PRODUCT_UNAVAILABLE is a distinct checkout action while other 409 conf
   assert.equal(checkoutResultAction(409, { error: "Conflicting Idempotency-Key" }), "restart-attempt");
 
   const result = await submitCheckout({
-    apiBase: "https://api.example.test",
-    body: { items: [] },
+    config: { enabled: true, environment: "test", apiBase: "https://api.example.test", scope: { productId: "product-1", quantity: 1 } },
+    body: { items: [{ product_id: "product-1", quantity: 1 }], shipping_rate_id: "rate-1" },
     idempotencyKey: "checkout-test",
     fetchImpl: async () => new Response(JSON.stringify(payload), {
       status: 409,
@@ -106,7 +106,7 @@ test("PRODUCT_UNAVAILABLE reconciles only server-identified cart IDs and never e
   assert.ok(branch >= 0);
   assert.ok(reconcile > branch);
   assert.ok(payment < branch || payment > reconcile);
-  assert.match(script.slice(branch, branch + 900), /localStorage\.removeItem\("nutrileaf-checkout-attempt"\)/);
+  assert.match(script.slice(branch, branch + 900), /clearActiveCheckoutAttempt\(\)/);
   assert.match(script.slice(branch, branch + 900), /await loadCatalog\(\)/);
   assert.doesNotMatch(script.slice(branch, branch + 900), /tax|stock|review/i);
 });

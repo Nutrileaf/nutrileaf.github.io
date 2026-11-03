@@ -24,7 +24,7 @@ test("storefront exposes an accessible pending-order checkout form", () => {
   assert.match(html, /name="country"[^>]*value="US"/);
   assert.match(html, /script type="module" src="script\.js"/);
   assert.match(source, /submitCheckout/);
-  assert.match(source, /submitPaymentInitiation/);
+  assert.match(source, /createPaymentController/);
   assert.match(source, /data-payment-provider="STRIPE"/);
   assert.match(source, /data-payment-provider="PAYPAL"/);
   assert.doesNotMatch(source, /sk_(test|live)_|paypal.*secret/i);
