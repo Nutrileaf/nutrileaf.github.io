@@ -2,6 +2,16 @@ import { COMMERCE_CONFIG, commerceApiBase, checkoutStorageKey, ORDER_ID_PATTERN 
 import { readCheckoutHold } from "./checkout-state.js";
 const CHECKOUT_OWNER_KEY = /^checkout-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export function paymentRecoveryFeedback(action) {
+  if (action === "ownership-required") return {
+    retryAllowed: false, checkStatus: true,
+    message: "Your saved checkout ownership is unavailable. Check this order's status or contact the store before making another payment."
+  };
+  return { retryAllowed: true, checkStatus: false, message: action === "conflict"
+    ? "This order already has a payment attempt. Please use its existing payment page."
+    : "The payment service is temporarily unavailable. Retry safely." };
+}
+
 function safeRedirect(value, provider, environment) {
   if (typeof value !== "string") return false;
   try {
@@ -49,7 +59,9 @@ export function createPaymentController({ config = COMMERCE_CONFIG, orderId, sto
       if (!ORDER_ID_PATTERN.test(orderId || "") || !["STRIPE", "PAYPAL"].includes(provider)) return { action: "invalid", status: 0, payload: null };
       inFlight = true;
       try {
-        const hold = readCheckoutHold({ storage: holdStorage, config });
+        let hold;
+        try { hold = readCheckoutHold({ storage: holdStorage, config }); }
+        catch { return { action: config.environment === "production" ? "ownership-required" : "retry", status: 0, payload: null }; }
         if (hold?.legacy) return { action: "conflict", status: 0, payload: null };
         if (config.environment === "production" && (hold?.orderId !== orderId || !CHECKOUT_OWNER_KEY.test(hold?.key || ""))) return { action: "ownership-required", status: 0, payload: null };
         const storageKey = checkoutStorageKey(`payment-operation:${orderId}`, config);

@@ -1,6 +1,6 @@
 import { normalizeCatalog, normalizeCart, createCheckoutRequest, checkoutFingerprint, validateCheckoutRequest, createShippingRateRequest, selectedShippingRate, prepareCheckoutAttempt, readCheckoutAttempt, readCheckoutHold, saveCheckoutAttempt, clearRejectedCheckoutAttempt, clearLegacyPersonalCheckoutState } from "./checkout-state.js";
 import { submitCheckout, getShippingRates } from "./checkout-submit.js";
-import { createPaymentController } from "./payment-initiation.js";
+import { createPaymentController, paymentRecoveryFeedback } from "./payment-initiation.js";
 import { trackAddToCart, trackBeginCheckout } from "./analytics.js";
 import { normalizeProductAvailability, isProductPurchasable, resolveProductImage, reconcileUnavailableCartItems } from "./p23-storefront-compat.js";
 import { CATALOG_API_BASE } from "./p27-catalog-launch.js";
@@ -230,11 +230,14 @@ async function handleCheckoutSubmit(event){
     paymentButtons.forEach(control=>control.disabled=true);checkoutStatus.setAttribute("aria-busy","true");
     const payment=await paymentController.initiate(provider);
     if(payment.action==="busy")return;
-    checkoutStatus.removeAttribute("aria-busy");paymentButtons.forEach(control=>control.disabled=false);
+    checkoutStatus.removeAttribute("aria-busy");
     if(payment.action==="redirect"&&typeof payment.payload?.redirect_url==="string"){
       location.assign(payment.payload.redirect_url);return;
     }
-    checkoutStatus.insertAdjacentHTML("beforeend",`<p class="checkout-errors">${payment.action==="conflict"?"This order already has a payment attempt. Please use its existing payment page.":"The payment service is temporarily unavailable. Retry safely."}</p>`);
+    const feedback=paymentRecoveryFeedback(payment.action);
+    paymentButtons.forEach(control=>control.disabled=!feedback.retryAllowed);
+    checkoutStatus.insertAdjacentHTML("beforeend",`<p class="checkout-errors">${escapeHtml(feedback.message)}</p>`);
+    if(feedback.checkStatus)checkoutStatus.insertAdjacentHTML("beforeend",`<p><a href="confirmation.html?order_id=${encodeURIComponent(order.id)}">Check this order's status</a></p>`);
    }));
   }else if(result.action==="status-required"){
    activeCheckoutAttempt={...attempt,order:result.payload.order};
