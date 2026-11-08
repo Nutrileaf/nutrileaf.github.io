@@ -38,6 +38,7 @@ test("saved checkout identity is isolated by environment, ingress and approved p
 test("simultaneous provider clicks send one initiation and reload reuses its operation", async () => {
   assert.equal(typeof payment.createPaymentController, "function");
   const store = storage();
+  store.setItem(launch.checkoutStorageKey("checkout-hold", config), JSON.stringify({ key: "checkout-33333333-3333-4333-8333-333333333333", orderId }));
   let resolvePayment, calls = 0;
   const controller = payment.createPaymentController({ config, orderId, storage: store, uuid: () => operationId, fetchImpl: async () => { calls++; return new Promise(resolve => { resolvePayment = resolve; }); } });
   const first = controller.initiate("STRIPE");
@@ -54,6 +55,7 @@ test("simultaneous provider clicks send one initiation and reload reuses its ope
 test("ambiguous payment failure preserves the operation and the cart for safe retry", async () => {
   assert.equal(typeof payment.createPaymentController, "function");
   const store = storage();
+  store.setItem(launch.checkoutStorageKey("checkout-hold", config), JSON.stringify({ key: "checkout-33333333-3333-4333-8333-333333333333", orderId }));
   store.setItem("nutrileaf-cart-v2", JSON.stringify(request.items));
   const first = payment.createPaymentController({ config, orderId, storage: store, uuid: () => operationId, fetchImpl: async () => { throw new Error("response lost"); } });
   assert.equal((await first.initiate("STRIPE")).action, "retry");

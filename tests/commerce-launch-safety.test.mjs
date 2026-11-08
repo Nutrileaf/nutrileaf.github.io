@@ -6,6 +6,7 @@ import { getOrderStatus } from "../order-status.js";
 
 const orderId = "11111111-1111-4111-8111-111111111111";
 const operationId = "22222222-2222-4222-8222-222222222222";
+const checkoutKey = "checkout-33333333-3333-4333-8333-333333333333";
 const config = { enabled: true, environment: "production", apiBase: "https://commerce.example.test", scope: { productId: "product-1", quantity: 1 } };
 const body = { customer: { email: "buyer@example.test" }, items: [{ product_id: "product-1", quantity: 1 }], shipping_rate_id: "rate-1" };
 const json = (payload, status = 200) => new Response(JSON.stringify(payload), { status });
@@ -47,13 +48,13 @@ test("malformed successful order responses cannot enter payment selection", asyn
 
 test("payment accepts only the matching operation and environment-specific hosted provider URL", async () => {
   for (const redirect_url of ["javascript:alert(1)", "https://checkout.stripe.com.evil.test/c/pay/cs_live_abc", "https://checkout.stripe.com@evil.test/c/pay/cs_live_abc", "https://checkout.stripe.com/c/pay/cs_test_abc", "https://www.sandbox.paypal.com/checkoutnow?token=abc"]) {
-    const result = await submitPaymentInitiation({ config, orderId, provider: "STRIPE", operationId, fetchImpl: async () => json({ provider: "STRIPE", operation_id: operationId, redirect_url }, 201) });
+    const result = await submitPaymentInitiation({ config, orderId, provider: "STRIPE", operationId, checkoutKey, fetchImpl: async () => json({ provider: "STRIPE", operation_id: operationId, redirect_url }, 201) });
     assert.equal(result.action, "retry", redirect_url);
   }
-  const result = await submitPaymentInitiation({ config, orderId, provider: "STRIPE", operationId, fetchImpl: async () => json({ provider: "STRIPE", operation_id: operationId, redirect_url: "https://checkout.stripe.com/c/pay/cs_live_abc#fid" }, 201) });
+  const result = await submitPaymentInitiation({ config, orderId, provider: "STRIPE", operationId, checkoutKey, fetchImpl: async () => json({ provider: "STRIPE", operation_id: operationId, redirect_url: "https://checkout.stripe.com/c/pay/cs_live_abc#fid" }, 201) });
   assert.equal(result.action, "redirect");
   for (const mismatch of [{ provider: "PAYPAL", operation_id: operationId }, { provider: "STRIPE", operation_id: orderId }]) {
-    const invalid = await submitPaymentInitiation({ config, orderId, provider: "STRIPE", operationId, fetchImpl: async () => json({ ...mismatch, redirect_url: "https://checkout.stripe.com/c/pay/cs_live_abc" }, 201) });
+    const invalid = await submitPaymentInitiation({ config, orderId, provider: "STRIPE", operationId, checkoutKey, fetchImpl: async () => json({ ...mismatch, redirect_url: "https://checkout.stripe.com/c/pay/cs_live_abc" }, 201) });
     assert.equal(invalid.action, "retry");
   }
 });
@@ -70,9 +71,9 @@ test("status exposes read-only shipping progress without links, action flags, or
 
 test("hosted PayPal URLs follow the source-owned environment and never cross to Sandbox", async () => {
   for (const [environment, host] of [["production", "www.paypal.com"], ["test", "www.sandbox.paypal.com"]]) {
-    const result = await submitPaymentInitiation({ config: { ...config, environment }, orderId, provider: "PAYPAL", operationId, fetchImpl: async () => json({ provider: "PAYPAL", operation_id: operationId, redirect_url: `https://${host}/checkoutnow?token=abc` }, 201) });
+    const result = await submitPaymentInitiation({ config: { ...config, environment }, orderId, provider: "PAYPAL", operationId, checkoutKey, fetchImpl: async () => json({ provider: "PAYPAL", operation_id: operationId, redirect_url: `https://${host}/checkoutnow?token=abc` }, 201) });
     assert.equal(result.action, "redirect");
-    const cross = await submitPaymentInitiation({ config: { ...config, environment }, orderId, provider: "PAYPAL", operationId, fetchImpl: async () => json({ provider: "PAYPAL", operation_id: operationId, redirect_url: `https://${host === "www.paypal.com" ? "www.sandbox.paypal.com" : "www.paypal.com"}/checkoutnow?token=abc` }, 201) });
+    const cross = await submitPaymentInitiation({ config: { ...config, environment }, orderId, provider: "PAYPAL", operationId, checkoutKey, fetchImpl: async () => json({ provider: "PAYPAL", operation_id: operationId, redirect_url: `https://${host === "www.paypal.com" ? "www.sandbox.paypal.com" : "www.paypal.com"}/checkoutnow?token=abc` }, 201) });
     assert.equal(cross.action, "retry");
   }
 });
